@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:userregistrationapp/views/customtextfeild.dart';
 import 'package:userregistrationapp/views/visitorslist.dart';
 
 class ScreenHome extends StatelessWidget {
@@ -17,6 +18,15 @@ class ScreenHome extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    CircleAvatar(
+                      backgroundColor: Colors.transparent,
+                      maxRadius: 40,
+                      minRadius: 20,
+                      child: Image.asset('assets/edit.png'),
+                    ),
+                    SizedBox(
+                      height: 15,
+                    ),
                     InkWell(
                       highlightColor: Colors.transparent,
                       splashColor: Colors.transparent,
@@ -30,10 +40,10 @@ class ScreenHome extends StatelessWidget {
                       child: const Text(
                         'Visitor Information',
                         style: TextStyle(
-                          fontSize: 24.0,
+                          fontSize: 27.0,
                           fontWeight: FontWeight.bold,
-                          color: Colors
-                              .deepPurple, // Optional: change the text color to indicate it's clickable
+                          color: Color(
+                              0xFF9489F5), // Optional: change the text color to indicate it's clickable
                         ),
                       ),
                     ),
@@ -171,9 +181,29 @@ class _RegistrationFormState extends State<RegistrationForm> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
-          TextFormField(
+          CustomTextField(
             controller: _fullNameController,
-            decoration: const InputDecoration(labelText: 'Full Name'),
+            labelText: 'Full Name',
+            hintText: 'Enter your full name',
+            hintStyleFontFamily: 'Manrope',
+            hintStyleColor: Color(0xFF101213),
+            hintStyleFontSize: 16,
+            hintStyleFontWeight: FontWeight.normal,
+            enabledBorderWidth: 2,
+            focusedBorderWidth: 2,
+            errorBorderWidth: 2,
+            focusedErrorBorderWidth: 2,
+            contentPaddingStart: 20,
+            contentPaddingTop: 24,
+            contentPaddingEnd: 20,
+            keyboardType: TextInputType.phone,
+            contentPaddingBottom: 24,
+            style: TextStyle(
+              fontFamily: 'Manrope',
+              color: Color(0xFF101213),
+              fontSize: 14,
+              fontWeight: FontWeight.normal,
+            ),
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Please enter your full name';
@@ -181,21 +211,86 @@ class _RegistrationFormState extends State<RegistrationForm> {
               return null;
             },
           ),
-          TextFormField(
+          SizedBox(
+            height: 8,
+          ),
+          CustomTextField(
             controller: _phoneNumberController,
-            decoration: const InputDecoration(labelText: 'Phone Number'),
-            keyboardType: TextInputType.phone,
+            labelText: 'Phone Number',
+            hintText: 'Enter your phone number',
+            hintStyleFontFamily: 'Manrope',
+            hintStyleColor: Color(0xFF101213),
+            hintStyleFontSize: 16,
+            hintStyleFontWeight: FontWeight.normal,
+            enabledBorderWidth: 2,
+            focusedBorderWidth: 2,
+            errorBorderWidth: 2,
+            focusedErrorBorderWidth: 2,
+            contentPaddingStart: 20,
+            contentPaddingTop: 24,
+            contentPaddingEnd: 20,
+            contentPaddingBottom: 24,
+            style: TextStyle(
+              fontFamily: 'Manrope',
+              color: Color(0xFF101213),
+              fontSize: 14,
+              fontWeight: FontWeight.normal,
+            ),
             validator: validatePhone,
           ),
-          TextFormField(
+          SizedBox(
+            height: 8,
+          ),
+          CustomTextField(
             controller: _emailController,
-            decoration: const InputDecoration(labelText: 'Email'),
+            labelText: 'Email',
+            hintText: 'Enter your email',
+            hintStyleFontFamily: 'Manrope',
+            hintStyleColor: Color(0xFF101213),
+            hintStyleFontSize: 16,
+            hintStyleFontWeight: FontWeight.normal,
+            enabledBorderWidth: 2,
+            focusedBorderWidth: 2,
+            errorBorderWidth: 2,
+            focusedErrorBorderWidth: 2,
+            contentPaddingStart: 20,
+            contentPaddingTop: 24,
+            contentPaddingEnd: 20,
+            contentPaddingBottom: 24,
+            style: TextStyle(
+              fontFamily: 'Manrope',
+              color: Color(0xFF101213),
+              fontSize: 14,
+              fontWeight: FontWeight.normal,
+            ),
             keyboardType: TextInputType.emailAddress,
             validator: validateEmail,
           ),
-          TextFormField(
+          SizedBox(
+            height: 8,
+          ),
+          CustomTextField(
             controller: _addressController,
-            decoration: const InputDecoration(labelText: 'Address'),
+            labelText: 'Address',
+            hintText: 'Enter your address',
+            hintStyleFontFamily: 'Manrope',
+            hintStyleColor: Color(0xFF101213),
+            hintStyleFontSize: 16,
+            hintStyleFontWeight: FontWeight.normal,
+            enabledBorderWidth: 2,
+            focusedBorderWidth: 2,
+            errorBorderWidth: 2,
+            focusedErrorBorderWidth: 2,
+            contentPaddingStart: 20,
+            contentPaddingTop: 24,
+            contentPaddingEnd: 20,
+            contentPaddingBottom: 24,
+            style: TextStyle(
+              fontFamily: 'Manrope',
+              color: Color(0xFF101213),
+              fontSize: 14,
+              fontWeight: FontWeight.normal,
+            ),
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Please enter your address';
@@ -203,15 +298,40 @@ class _RegistrationFormState extends State<RegistrationForm> {
               return null;
             },
           ),
-          TextFormField(
+          SizedBox(
+            height: 8,
+          ),
+          CustomTextField(
             controller: _purposeController,
-            decoration: const InputDecoration(labelText: 'Purpose of Visit'),
+            labelText: 'Purpose of Visit',
+            hintText: 'Enter the purpose of your visit',
+            hintStyleFontFamily: 'Manrope',
+            hintStyleColor: Color(0xFF101213),
+            hintStyleFontSize: 16,
+            hintStyleFontWeight: FontWeight.normal,
+            enabledBorderWidth: 2,
+            focusedBorderWidth: 2,
+            errorBorderWidth: 2,
+            focusedErrorBorderWidth: 2,
+            contentPaddingStart: 20,
+            contentPaddingTop: 24,
+            contentPaddingEnd: 20,
+            contentPaddingBottom: 24,
+            style: TextStyle(
+              fontFamily: 'Manrope',
+              color: Color(0xFF101213),
+              fontSize: 14,
+              fontWeight: FontWeight.normal,
+            ),
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Please enter the purpose of your visit';
               }
               return null;
             },
+          ),
+          SizedBox(
+            height: 8,
           ),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 16.0),
@@ -222,7 +342,27 @@ class _RegistrationFormState extends State<RegistrationForm> {
                   _saveDataToFirestore();
                 }
               },
-              child: const Center(child: Text('Submit')),
+              style: ElevatedButton.styleFrom(
+                primary: Color(0xFF9489F5),
+                onPrimary: Colors.white,
+                textStyle: TextStyle(
+                  fontFamily: 'Manrope',
+                  fontSize: 18,
+                  fontWeight: FontWeight.w500,
+                ),
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 17, top: 17),
+                child: const Center(
+                    child: Text(
+                  'Submit',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                )),
+              ),
             ),
           ),
         ],
