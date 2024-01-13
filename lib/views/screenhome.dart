@@ -196,7 +196,7 @@ class _RegistrationFormState extends State<RegistrationForm> {
             contentPaddingStart: 20,
             contentPaddingTop: 24,
             contentPaddingEnd: 20,
-            keyboardType: TextInputType.phone,
+            keyboardType: TextInputType.name,
             contentPaddingBottom: 24,
             style: TextStyle(
               fontFamily: 'Manrope',
@@ -226,6 +226,7 @@ class _RegistrationFormState extends State<RegistrationForm> {
             focusedBorderWidth: 2,
             errorBorderWidth: 2,
             focusedErrorBorderWidth: 2,
+            keyboardType: TextInputType.phone,
             contentPaddingStart: 20,
             contentPaddingTop: 24,
             contentPaddingEnd: 20,
