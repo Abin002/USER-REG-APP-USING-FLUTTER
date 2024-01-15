@@ -1,15 +1,67 @@
-import 'package:flutter/material.dart';
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:userregistrationapp/views/customtextfeild.dart';
-import 'package:userregistrationapp/views/visitorslist.dart';
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:userregistrationapp/views/loginalert.dart';
 
-class ScreenHome extends StatelessWidget {
-  const ScreenHome({Key? key});
+import 'package:userregistrationapp/views/visitorslist.dart';
+import 'customtextfeild.dart'; // Import your custom text field widget
+
+class ScreenHome extends StatefulWidget {
+  const ScreenHome({Key? key}) : super(key: key);
+
+  @override
+  _ScreenHomeState createState() => _ScreenHomeState();
+}
+
+class _ScreenHomeState extends State<ScreenHome> {
+  late String _selectedImagePath = '';
+  final _imagePicker = ImagePicker();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSelectedImagePath();
+  }
+
+  Future<void> _pickImage() async {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return LoginAlert(
+          onImageSelected: (selectedImagePath) async {
+            // Handle the selected image path
+            await _saveSelectedImagePath(selectedImagePath);
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _saveSelectedImagePath(String imagePath) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('selectedImagePath', imagePath);
+
+    setState(() {
+      _selectedImagePath = imagePath;
+    });
+  }
+
+  Future<void> _loadSelectedImagePath() async {
+    final prefs = await SharedPreferences.getInstance();
+    final imagePath = prefs.getString('selectedImagePath') ?? '';
+
+    setState(() {
+      _selectedImagePath = imagePath;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Center(
       child: Scaffold(
+        backgroundColor: Colors.white,
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(16.0),
@@ -18,11 +70,25 @@ class ScreenHome extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    CircleAvatar(
-                      backgroundColor: Colors.transparent,
-                      maxRadius: 40,
-                      minRadius: 20,
-                      child: Image.asset('assets/edit.png'),
+                    ClipOval(
+                      child: Container(
+                        color: Colors.transparent,
+                        width: 95,
+                        height: 95,
+                        child: InkWell(
+                          highlightColor: Colors.transparent,
+                          splashColor: Colors.transparent,
+                          focusColor: Colors.transparent,
+                          onLongPress: _pickImage,
+                          child: _selectedImagePath.isNotEmpty
+                              ? ClipOval(
+                                  child: Image.file(File(_selectedImagePath),
+                                      fit: BoxFit.cover),
+                                )
+                              : Image.asset('assets/edit.png',
+                                  fit: BoxFit.cover),
+                        ),
+                      ),
                     ),
                     SizedBox(
                       height: 15,
@@ -42,8 +108,7 @@ class ScreenHome extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 27.0,
                           fontWeight: FontWeight.bold,
-                          color: Color(
-                              0xFF9489F5), // Optional: change the text color to indicate it's clickable
+                          color: Color(0xFF9489F5),
                         ),
                       ),
                     ),
@@ -61,6 +126,8 @@ class ScreenHome extends StatelessWidget {
     );
   }
 }
+
+// Rest of your code remains unchanged...
 
 class RegistrationForm extends StatefulWidget {
   @override
