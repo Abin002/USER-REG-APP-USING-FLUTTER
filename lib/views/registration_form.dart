@@ -100,21 +100,8 @@ class _RegistrationFormState extends State<RegistrationForm> {
   }
 
   Future<void> _saveDataToFirestore() async {
-    // Use compute to run the operation in a background isolate
-    await compute(_backgroundSaveDataToFirestore, {
-      'fullName': _fullNameController.text,
-      'phoneNumber': _phoneNumberController.text,
-      'email': _emailController.text,
-      'address': _addressController.text,
-      'purpose': _purposeController.text,
-      'selectedImagePath': _selectedImagePath,
-      'context': context,
-    });
-  }
-
-  Future<void> _backgroundSaveDataToFirestore(Map<String, dynamic> data) async {
     try {
-      final phoneNumber = data['phoneNumber'];
+      final phoneNumber = _phoneNumberController.text;
 
       // Check if a document with the same phone number already exists
       final querySnapshot = await FirebaseFirestore.instance
@@ -124,7 +111,7 @@ class _RegistrationFormState extends State<RegistrationForm> {
 
       if (querySnapshot.docs.isNotEmpty) {
         // Show a Snackbar indicating that the phone number already exists
-        ScaffoldMessenger.of(data['context']).showSnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Phone number already exists!'),
             duration: Duration(seconds: 2),
@@ -138,12 +125,11 @@ class _RegistrationFormState extends State<RegistrationForm> {
           .ref()
           .child('visitor_photos')
           .child(DateTime.now().toString());
-      final uploadTask = storageRef.putFile(File(data['selectedImagePath']));
+      final uploadTask = storageRef.putFile(File(_selectedImagePath));
 
       // Show a loading indicator while uploading
       showDialog(
-        context: data['context'],
-        barrierDismissible: false, // User cannot dismiss the dialog
+        context: context,
         builder: (BuildContext context) {
           return AlertDialog(
             backgroundColor: Colors.white,
@@ -164,53 +150,51 @@ class _RegistrationFormState extends State<RegistrationForm> {
         },
       );
 
-      try {
-        // Wait for the upload to complete
-        await uploadTask.whenComplete(() => null);
+      // Wait for the upload to complete
+      await uploadTask.whenComplete(() => null);
 
-        // Get the download URL of the uploaded image
-        final imageUrl = await storageRef.getDownloadURL();
+      // Hide the loading indicator
+      Navigator.of(context).pop();
 
-        // Continue saving to Firestore if the phone number is unique
-        await FirebaseFirestore.instance.collection('visitors').add({
-          'full name': data['fullName'],
-          'phone': phoneNumber,
-          'email': data['email'],
-          'address': data['address'],
-          'purpose': data['purpose'],
-          'time': FieldValue.serverTimestamp(),
-          'photo_url': imageUrl,
-        });
+      // Get the download URL of the uploaded image
+      final imageUrl = await storageRef.getDownloadURL();
 
-        // Clear text fields
-        _fullNameController.clear();
-        _phoneNumberController.clear();
-        _emailController.clear();
-        _addressController.clear();
-        _purposeController.clear();
+      // Continue saving to Firestore if the phone number is unique
+      await FirebaseFirestore.instance.collection('visitors').add({
+        'full name': _fullNameController.text,
+        'phone': phoneNumber,
+        'email': _emailController.text,
+        'address': _addressController.text,
+        'purpose': _purposeController.text,
+        'time': FieldValue.serverTimestamp(),
+        'photo_url':
+            imageUrl, // Save the download URL instead of the local path
+      });
 
-        // Clear the selected photo path
-        ScaffoldMessenger.of(data['context']).hideCurrentSnackBar();
-        setState(() {
-          _selectedImagePath = '';
-        });
+      // Clear text fields
+      _fullNameController.clear();
+      _phoneNumberController.clear();
+      _emailController.clear();
+      _addressController.clear();
+      _purposeController.clear();
 
-        FocusScope.of(data['context']).unfocus();
+      // Clear the selected photo path
+      setState(() {
+        _selectedImagePath = '';
+      });
 
-        // Show a Snackbar for successful submission
-        ScaffoldMessenger.of(data['context']).showSnackBar(
-          const SnackBar(
-            content: Text('Successfully submitted!'),
-            duration: Duration(seconds: 2),
-          ),
-        );
+      FocusScope.of(context).unfocus();
 
-        // Print the values if needed
-        print('Data saved to Firestore successfully!');
-      } finally {
-        // Hide the loading indicator
-        Navigator.of(data['context']).pop();
-      }
+      // Show a Snackbar for successful submission
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Successfully submitted!'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+
+      // Print the values if needed
+      print('Data saved to Firestore successfully!');
     } catch (e) {
       print('Error saving data to Firestore: $e');
     }
