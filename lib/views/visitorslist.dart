@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:io';
+import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -15,18 +17,26 @@ class _VisitorsListState extends State<VisitorsList> {
   DateTime endDate = DateTime.now();
   late TextEditingController startDateController;
   late TextEditingController endDateController;
-  late StreamController<void>
-      updateController; // StreamController to trigger updates
-  late Stream<void> updateStream; // Stream to listen for updates
-  late StreamSubscription<void>
-      updateSubscription; // Subscription to updateStream
+  late StreamController<void> updateController;
+  late Stream<void> updateStream;
+  late StreamSubscription<void> updateSubscription;
   late Stream<QuerySnapshot> stream;
 
-  Future<void> _deleteVisitor(String documentId) async {
-    await FirebaseFirestore.instance
-        .collection('visitors')
-        .doc(documentId)
-        .delete();
+  Future<void> _deleteVisitor(String documentId, String imagePath) async {
+    try {
+      // Delete the data from Firestore
+      await FirebaseFirestore.instance
+          .collection('visitors')
+          .doc(documentId)
+          .delete();
+
+      // Delete the image from Firebase Storage
+      await firebase_storage.FirebaseStorage.instance
+          .refFromURL(imagePath)
+          .delete();
+    } catch (e) {
+      print('Error deleting data and image: $e');
+    }
   }
 
   @override
@@ -43,7 +53,6 @@ class _VisitorsListState extends State<VisitorsList> {
         .orderBy('time', descending: true)
         .snapshots();
 
-    // Subscribe to the updateStream and rebuild the widget on updates
     updateSubscription = updateStream.listen((_) {
       if (mounted) {
         setState(() {});
@@ -53,8 +62,8 @@ class _VisitorsListState extends State<VisitorsList> {
 
   @override
   void dispose() {
-    updateController.close(); // Close the StreamController
-    updateSubscription.cancel(); // Cancel the StreamSubscription
+    updateController.close();
+    updateSubscription.cancel();
     super.dispose();
   }
 
@@ -70,7 +79,7 @@ class _VisitorsListState extends State<VisitorsList> {
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.filter_list),
+            icon: const Icon(Icons.filter_list),
             onPressed: () {
               showDialog(
                 context: context,
@@ -78,7 +87,7 @@ class _VisitorsListState extends State<VisitorsList> {
                   return StatefulBuilder(
                     builder: (context, setState) {
                       return AlertDialog(
-                        title: Text('Select Time Range'),
+                        title: const Text('Select Time Range'),
                         content: SingleChildScrollView(
                           child: Container(
                             height: MediaQuery.of(context).size.height * 0.3,
@@ -86,7 +95,7 @@ class _VisitorsListState extends State<VisitorsList> {
                               children: [
                                 Card(
                                   child: ListTile(
-                                    title: Text('Start Date:'),
+                                    title: const Text('Start Date:'),
                                     subtitle: InkWell(
                                       onTap: () async {
                                         DateTime? picked = await showDatePicker(
@@ -112,7 +121,7 @@ class _VisitorsListState extends State<VisitorsList> {
                                 ),
                                 Card(
                                   child: ListTile(
-                                    title: Text('End Date:'),
+                                    title: const Text('End Date:'),
                                     subtitle: InkWell(
                                       onTap: () async {
                                         DateTime? picked = await showDatePicker(
@@ -145,11 +154,10 @@ class _VisitorsListState extends State<VisitorsList> {
                             onPressed: () {
                               Navigator.of(context).pop();
                             },
-                            child: Text('Cancel'),
+                            child: const Text('Cancel'),
                           ),
                           TextButton(
                             onPressed: () async {
-                              // Perform Firestore query with date range filter
                               var query = FirebaseFirestore.instance
                                   .collection('visitors')
                                   .where(
@@ -182,15 +190,13 @@ class _VisitorsListState extends State<VisitorsList> {
                                   )
                                   .orderBy('time', descending: true);
 
-                              Navigator.of(context).pop(); // Close the dialog
-                              // Trigger an update to the stream
+                              Navigator.of(context).pop();
                               updateController.add(null);
-                              // Directly update the StreamBuilder with the new query
                               setState(() {
                                 stream = query.snapshots();
                               });
                             },
-                            child: Text('Apply'),
+                            child: const Text('Apply'),
                           ),
                         ],
                       );
@@ -216,7 +222,7 @@ class _VisitorsListState extends State<VisitorsList> {
           var documents = snapshot.data!.docs;
 
           if (documents.isEmpty) {
-            return Center(
+            return const Center(
               child: Text(
                 'No visitors found in the selected date range.',
                 style: TextStyle(fontSize: 16),
@@ -229,6 +235,7 @@ class _VisitorsListState extends State<VisitorsList> {
             itemBuilder: (context, index) {
               var visitorData = documents[index].data() as Map<String, dynamic>;
               var documentId = documents[index].id;
+              var imagePath = visitorData['photo_url'] ?? '';
 
               return Padding(
                 padding: const EdgeInsets.only(left: 8, right: 8),
@@ -237,22 +244,20 @@ class _VisitorsListState extends State<VisitorsList> {
                   surfaceTintColor: Colors.white,
                   color: Colors.white,
                   child: ListTile(
-                    leading: CircleAvatar(
-                      child: Text('${index + 1}'),
-                    ),
+                    leading: Image.network(visitorData['photo_url']),
                     title: Text('Name: ${visitorData['full name'] ?? ''}'),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('Phone: ${visitorData['phone'] ?? ''}'),
                         Text('Email: ${visitorData['email'] ?? ''}'),
-                        Text('Address: ${visitorData['adress'] ?? ''}'),
+                        Text('Address: ${visitorData['address'] ?? ''}'),
                         Text('Time: ${visitorData['time']?.toDate() ?? ''}'),
                         Text('Purpose: ${visitorData['purpose'] ?? ''}'),
                       ],
                     ),
                     trailing: IconButton(
-                      icon: Icon(Icons.delete, color: Colors.red),
+                      icon: const Icon(Icons.delete, color: Colors.red),
                       onPressed: () {
                         showDialog(
                           context: context,
@@ -260,8 +265,8 @@ class _VisitorsListState extends State<VisitorsList> {
                             return AlertDialog(
                               backgroundColor: Colors.white,
                               surfaceTintColor: Colors.white,
-                              title: Text('Delete Visitor'),
-                              content: Text(
+                              title: const Text('Delete Visitor'),
+                              content: const Text(
                                 'Are you sure you want to delete this visitor?',
                               ),
                               actions: [
@@ -269,14 +274,14 @@ class _VisitorsListState extends State<VisitorsList> {
                                   onPressed: () {
                                     Navigator.of(context).pop();
                                   },
-                                  child: Text('Cancel'),
+                                  child: const Text('Cancel'),
                                 ),
                                 TextButton(
                                   onPressed: () {
-                                    _deleteVisitor(documentId);
+                                    _deleteVisitor(documentId, imagePath);
                                     Navigator.of(context).pop();
                                   },
-                                  child: Text('Delete'),
+                                  child: const Text('Delete'),
                                 ),
                               ],
                             );

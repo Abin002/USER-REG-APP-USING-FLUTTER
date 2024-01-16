@@ -19,3 +19,7 @@ IT HAVE A HIDDEN FEATURE WHERE WE CAN SEE THE USERS IF WE LONG PRESS THE TITLE
  # VERSION 1.2 
 
  ADDED ICON PICKER AND FILTER DATE FEATURE AND A HARDCODE LOGIN TO SET ICON 
+
+ # version 1.3
+
+ going to add a feature to take picture while registering and showing picture in list

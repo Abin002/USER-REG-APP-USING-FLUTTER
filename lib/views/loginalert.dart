@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -10,7 +9,7 @@ class LoginAlert extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(
+      title: const Text(
         'Login',
         style: TextStyle(fontWeight: FontWeight.bold),
       ),
@@ -45,14 +44,14 @@ class _LoginContentState extends State<LoginContent> {
             decoration: InputDecoration(
               labelText: 'Username',
               hintText: 'Enter your username',
-              hintStyle: TextStyle(
+              hintStyle: const TextStyle(
                 fontFamily: 'Manrope',
                 color: Color(0xFF101213),
                 fontSize: 16,
                 fontWeight: FontWeight.normal,
               ),
               enabledBorder: OutlineInputBorder(
-                borderSide: BorderSide(
+                borderSide: const BorderSide(
                   color: Colors.grey, // Set to default dark grey color
                   width: 2,
                 ),
@@ -65,16 +64,17 @@ class _LoginContentState extends State<LoginContent> {
                 ),
                 borderRadius: BorderRadius.circular(10),
               ),
-              contentPadding: EdgeInsetsDirectional.fromSTEB(20, 24, 20, 24),
+              contentPadding:
+                  const EdgeInsetsDirectional.fromSTEB(20, 24, 20, 24),
             ),
-            style: TextStyle(
+            style: const TextStyle(
               fontFamily: 'Manrope',
               color: Color(0xFF101213),
               fontSize: 14,
               fontWeight: FontWeight.normal,
             ),
           ),
-          SizedBox(
+          const SizedBox(
             height: 10,
           ),
           TextFormField(
@@ -82,14 +82,14 @@ class _LoginContentState extends State<LoginContent> {
             decoration: InputDecoration(
               labelText: 'Password',
               hintText: 'Enter your password',
-              hintStyle: TextStyle(
+              hintStyle: const TextStyle(
                 fontFamily: 'Manrope',
                 color: Color(0xFF101213),
                 fontSize: 16,
                 fontWeight: FontWeight.normal,
               ),
               enabledBorder: OutlineInputBorder(
-                borderSide: BorderSide(
+                borderSide: const BorderSide(
                   color: Colors.grey, // Set to default dark grey color
                   width: 2,
                 ),
@@ -102,9 +102,10 @@ class _LoginContentState extends State<LoginContent> {
                 ),
                 borderRadius: BorderRadius.circular(10),
               ),
-              contentPadding: EdgeInsetsDirectional.fromSTEB(20, 24, 20, 24),
+              contentPadding:
+                  const EdgeInsetsDirectional.fromSTEB(20, 24, 20, 24),
             ),
-            style: TextStyle(
+            style: const TextStyle(
               fontFamily: 'Manrope',
               color: Color(0xFF101213),
               fontSize: 14,
@@ -112,7 +113,7 @@ class _LoginContentState extends State<LoginContent> {
             ),
             obscureText: true,
           ),
-          SizedBox(
+          const SizedBox(
             height: 10,
           ),
           ElevatedButton(
@@ -129,7 +130,7 @@ class _LoginContentState extends State<LoginContent> {
                   widget.onImageSelected?.call(pickedFile.path);
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
+                    const SnackBar(
                       content: Text('No image selected'),
                       duration: Duration(seconds: 2),
                     ),
@@ -139,7 +140,7 @@ class _LoginContentState extends State<LoginContent> {
               } else {
                 // If credentials are invalid, show an error message
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
+                  const SnackBar(
                     content: Text('Invalid credentials. Please try again.'),
                     duration: Duration(seconds: 2),
                   ),
@@ -147,9 +148,9 @@ class _LoginContentState extends State<LoginContent> {
               }
             },
             style: ElevatedButton.styleFrom(
-              primary: Color(0xFF9489F5),
-              onPrimary: Colors.white,
-              textStyle: TextStyle(
+              foregroundColor: Colors.white,
+              backgroundColor: const Color(0xFF9489F5),
+              textStyle: const TextStyle(
                 fontFamily: 'Manrope',
                 fontSize: 18,
                 fontWeight: FontWeight.w500,
@@ -159,9 +160,9 @@ class _LoginContentState extends State<LoginContent> {
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 17, top: 17),
-              child: const Center(
+            child: const Padding(
+              padding: EdgeInsets.only(bottom: 17, top: 17),
+              child: Center(
                 child: Text(
                   'Login',
                   style: TextStyle(fontWeight: FontWeight.bold),
