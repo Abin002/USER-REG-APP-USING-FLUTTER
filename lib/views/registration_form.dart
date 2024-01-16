@@ -1,12 +1,15 @@
+// registration_form.dart
+
 import 'dart:io';
-import 'dart:typed_data';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'customtextfeild.dart';
-import 'package:image/image.dart' as img;
+import 'image_compression.dart'; // Import the new file
 
 class RegistrationForm extends StatefulWidget {
   @override
@@ -66,18 +69,29 @@ class _RegistrationFormState extends State<RegistrationForm> {
     return null;
   }
 
+  bool _isImageProcessing = false;
   Future<void> _pickImage() async {
     try {
       final imagePickerResult =
           await _imagePicker.pickImage(source: ImageSource.camera);
 
       if (imagePickerResult != null) {
-        // Compress the image before setting it
+        // Set the variable to true to indicate that image compression is in progress
+        setState(() {
+          _isImageProcessing = true;
+        });
+
+        // Perform image compression in a separate isolate
         final compressedImage =
-            await compressImage(File(imagePickerResult.path ?? ''));
+            await compute(compressImage, imagePickerResult.path ?? '');
+
+        // Set the variable to false to indicate that image compression is complete
+        setState(() {
+          _isImageProcessing = false;
+        });
 
         setState(() {
-          _selectedImagePath = compressedImage?.path ?? '';
+          _selectedImagePath = compressedImage ?? '';
         });
       }
     } catch (e) {
@@ -85,33 +99,22 @@ class _RegistrationFormState extends State<RegistrationForm> {
     }
   }
 
-  Future<File?> compressImage(File? file) async {
-    if (file == null || file.path == null) {
-      return null;
-    }
-
-    try {
-      final originalImage = img.decodeImage(file.readAsBytesSync());
-      final compressedImage = img.copyResize(originalImage!, width: 800);
-
-      // Convert image to Uint8List with lower quality (e.g., quality: 30)
-      final Uint8List compressedBytes =
-          Uint8List.fromList(img.encodeJpg(compressedImage, quality: 30));
-
-      // Write compressedBytes to file
-      final compressedFile = File(file.path! + '_compressed.jpg')
-        ..writeAsBytesSync(compressedBytes);
-
-      return compressedFile;
-    } catch (e) {
-      print('Error compressing image: $e');
-      return null;
-    }
+  Future<void> _saveDataToFirestore() async {
+    // Use compute to run the operation in a background isolate
+    await compute(_backgroundSaveDataToFirestore, {
+      'fullName': _fullNameController.text,
+      'phoneNumber': _phoneNumberController.text,
+      'email': _emailController.text,
+      'address': _addressController.text,
+      'purpose': _purposeController.text,
+      'selectedImagePath': _selectedImagePath,
+      'context': context,
+    });
   }
 
-  Future<void> _saveDataToFirestore() async {
+  Future<void> _backgroundSaveDataToFirestore(Map<String, dynamic> data) async {
     try {
-      final phoneNumber = _phoneNumberController.text;
+      final phoneNumber = data['phoneNumber'];
 
       // Check if a document with the same phone number already exists
       final querySnapshot = await FirebaseFirestore.instance
@@ -121,7 +124,7 @@ class _RegistrationFormState extends State<RegistrationForm> {
 
       if (querySnapshot.docs.isNotEmpty) {
         // Show a Snackbar indicating that the phone number already exists
-        ScaffoldMessenger.of(context).showSnackBar(
+        ScaffoldMessenger.of(data['context']).showSnackBar(
           const SnackBar(
             content: Text('Phone number already exists!'),
             duration: Duration(seconds: 2),
@@ -135,11 +138,12 @@ class _RegistrationFormState extends State<RegistrationForm> {
           .ref()
           .child('visitor_photos')
           .child(DateTime.now().toString());
-      final uploadTask = storageRef.putFile(File(_selectedImagePath));
+      final uploadTask = storageRef.putFile(File(data['selectedImagePath']));
 
       // Show a loading indicator while uploading
       showDialog(
-        context: context,
+        context: data['context'],
+        barrierDismissible: false, // User cannot dismiss the dialog
         builder: (BuildContext context) {
           return AlertDialog(
             backgroundColor: Colors.white,
@@ -160,51 +164,53 @@ class _RegistrationFormState extends State<RegistrationForm> {
         },
       );
 
-      // Wait for the upload to complete
-      await uploadTask.whenComplete(() => null);
+      try {
+        // Wait for the upload to complete
+        await uploadTask.whenComplete(() => null);
 
-      // Hide the loading indicator
-      Navigator.of(context).pop();
+        // Get the download URL of the uploaded image
+        final imageUrl = await storageRef.getDownloadURL();
 
-      // Get the download URL of the uploaded image
-      final imageUrl = await storageRef.getDownloadURL();
+        // Continue saving to Firestore if the phone number is unique
+        await FirebaseFirestore.instance.collection('visitors').add({
+          'full name': data['fullName'],
+          'phone': phoneNumber,
+          'email': data['email'],
+          'address': data['address'],
+          'purpose': data['purpose'],
+          'time': FieldValue.serverTimestamp(),
+          'photo_url': imageUrl,
+        });
 
-      // Continue saving to Firestore if the phone number is unique
-      await FirebaseFirestore.instance.collection('visitors').add({
-        'full name': _fullNameController.text,
-        'phone': phoneNumber,
-        'email': _emailController.text,
-        'address': _addressController.text,
-        'purpose': _purposeController.text,
-        'time': FieldValue.serverTimestamp(),
-        'photo_url':
-            imageUrl, // Save the download URL instead of the local path
-      });
+        // Clear text fields
+        _fullNameController.clear();
+        _phoneNumberController.clear();
+        _emailController.clear();
+        _addressController.clear();
+        _purposeController.clear();
 
-      // Clear text fields
-      _fullNameController.clear();
-      _phoneNumberController.clear();
-      _emailController.clear();
-      _addressController.clear();
-      _purposeController.clear();
+        // Clear the selected photo path
+        ScaffoldMessenger.of(data['context']).hideCurrentSnackBar();
+        setState(() {
+          _selectedImagePath = '';
+        });
 
-      // Clear the selected photo path
-      setState(() {
-        _selectedImagePath = '';
-      });
+        FocusScope.of(data['context']).unfocus();
 
-      FocusScope.of(context).unfocus();
+        // Show a Snackbar for successful submission
+        ScaffoldMessenger.of(data['context']).showSnackBar(
+          const SnackBar(
+            content: Text('Successfully submitted!'),
+            duration: Duration(seconds: 2),
+          ),
+        );
 
-      // Show a Snackbar for successful submission
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Successfully submitted!'),
-          duration: Duration(seconds: 2),
-        ),
-      );
-
-      // Print the values if needed
-      print('Data saved to Firestore successfully!');
+        // Print the values if needed
+        print('Data saved to Firestore successfully!');
+      } finally {
+        // Hide the loading indicator
+        Navigator.of(data['context']).pop();
+      }
     } catch (e) {
       print('Error saving data to Firestore: $e');
     }
@@ -374,13 +380,16 @@ class _RegistrationFormState extends State<RegistrationForm> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               ElevatedButton(
-                onPressed: _pickImage,
+                onPressed: _isImageProcessing
+                    ? null
+                    : _pickImage, // Disable button during processing
                 style: ElevatedButton.styleFrom(
                   primary: _selectedImagePath.isEmpty
-                      ? Colors.red // Red if no photo is selected
-                      : _selectedImagePath.isNotEmpty
-                          ? Colors.green // Green if photo is selected
-                          : Colors.blue, // Blue for initial state
+                      ? Colors.blue // Blue for initial state
+                      : _selectedImagePath.isNotEmpty && !_isImageProcessing
+                          ? Colors
+                              .green // Green if photo is selected and not processing
+                          : Colors.red, // Red if there's an error or processing
                   onPrimary: Colors.white,
                   textStyle: TextStyle(
                     fontFamily: 'Manrope',
@@ -395,7 +404,12 @@ class _RegistrationFormState extends State<RegistrationForm> {
                 child: Padding(
                   padding:
                       const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
-                  child: Text('Take Photo'),
+                  child: _isImageProcessing
+                      ? CircularProgressIndicator(
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(Colors.white),
+                        )
+                      : Text('Take Photo'),
                 ),
               ),
             ],
