@@ -23,3 +23,7 @@ IT HAVE A HIDDEN FEATURE WHERE WE CAN SEE THE USERS IF WE LONG PRESS THE TITLE
  # version 1.3
 
  going to add a feature to take picture while registering and showing picture in list
+
+ # VERSION 1.4 
+
+ ADDED APP NAME AND ICON .IN VER 1.5 TRYING TO ADD VIDEO CALL

@@ -1,10 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:userregistrationapp/views/registration_form.dart';
-import 'package:userregistrationapp/views/visitorslist.dart';
 
-import 'logo_picker.dart'; // Import the logo picker class
+import 'logo_picker.dart';
+import 'registration_form.dart';
+import 'visitorslist.dart'; // Import the logo picker class
 
 class ScreenHome extends StatefulWidget {
   const ScreenHome({Key? key}) : super(key: key);

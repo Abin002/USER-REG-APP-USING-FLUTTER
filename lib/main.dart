@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart'; // Import Firebase Core
-import 'package:userregistrationapp/firebase_options.dart';
-import 'package:userregistrationapp/views/screenhome.dart';
+import 'package:firebase_core/firebase_core.dart';
+
+import 'firebase_options.dart';
+import 'views/screenhome.dart'; // Import Firebase Core
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
