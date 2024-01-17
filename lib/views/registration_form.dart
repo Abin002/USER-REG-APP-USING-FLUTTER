@@ -1,15 +1,13 @@
-// registration_form.dart
-
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import 'package:image_picker/image_picker.dart';
+import 'package:camera/camera.dart';
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'customtextfeild.dart';
-import 'image_compression.dart'; // Import the new file
+import 'image_compression.dart';
 
 class RegistrationForm extends StatefulWidget {
   @override
@@ -24,7 +22,8 @@ class _RegistrationFormState extends State<RegistrationForm> {
   late TextEditingController _addressController;
   late TextEditingController _purposeController;
   late String _selectedImagePath = '';
-  final _imagePicker = ImagePicker();
+  late CameraController _cameraController;
+  final _firebaseStorage = firebase_storage.FirebaseStorage.instance;
 
   @override
   void initState() {
@@ -34,6 +33,13 @@ class _RegistrationFormState extends State<RegistrationForm> {
     _emailController = TextEditingController();
     _addressController = TextEditingController();
     _purposeController = TextEditingController();
+    _initializeCamera();
+  }
+
+  Future<void> _initializeCamera() async {
+    final cameras = await availableCameras();
+    _cameraController = CameraController(cameras[0], ResolutionPreset.medium);
+    await _cameraController.initialize();
   }
 
   @override
@@ -43,6 +49,7 @@ class _RegistrationFormState extends State<RegistrationForm> {
     _emailController.dispose();
     _addressController.dispose();
     _purposeController.dispose();
+    _cameraController.dispose();
     super.dispose();
   }
 
@@ -50,7 +57,6 @@ class _RegistrationFormState extends State<RegistrationForm> {
     if (value == null || value.isEmpty) {
       return 'Please enter your email';
     }
-    // Simple email validation
     if (!RegExp(r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$")
         .hasMatch(value)) {
       return 'Please enter a valid email address';
@@ -62,7 +68,6 @@ class _RegistrationFormState extends State<RegistrationForm> {
     if (value == null || value.isEmpty) {
       return 'Please enter your phone number';
     }
-    // Simple phone number validation
     if (!RegExp(r"^[0-9]{10}$").hasMatch(value)) {
       return 'Please enter a valid phone number';
     }
@@ -70,32 +75,20 @@ class _RegistrationFormState extends State<RegistrationForm> {
   }
 
   bool _isImageProcessing = false;
-  Future<void> _pickImage() async {
+  Future<void> _captureImage() async {
     try {
-      final imagePickerResult =
-          await _imagePicker.pickImage(source: ImageSource.camera);
+      setState(() {
+        _isImageProcessing = true;
+      });
 
-      if (imagePickerResult != null) {
-        // Set the variable to true to indicate that image compression is in progress
-        setState(() {
-          _isImageProcessing = true;
-        });
+      final XFile capturedImage = await _cameraController.takePicture();
 
-        // Perform image compression in a separate isolate
-        final compressedImage =
-            await compute(compressImage, imagePickerResult.path ?? '');
-
-        // Set the variable to false to indicate that image compression is complete
-        setState(() {
-          _isImageProcessing = false;
-        });
-
-        setState(() {
-          _selectedImagePath = compressedImage ?? '';
-        });
-      }
+      setState(() {
+        _isImageProcessing = false;
+        _selectedImagePath = capturedImage.path ?? '';
+      });
     } catch (e) {
-      print('Error picking image: $e');
+      print('Error capturing image: $e');
     }
   }
 
@@ -103,31 +96,27 @@ class _RegistrationFormState extends State<RegistrationForm> {
     try {
       final phoneNumber = _phoneNumberController.text;
 
-      // Check if a document with the same phone number already exists
       final querySnapshot = await FirebaseFirestore.instance
           .collection('visitors')
           .where('phone', isEqualTo: phoneNumber)
           .get();
 
       if (querySnapshot.docs.isNotEmpty) {
-        // Show a Snackbar indicating that the phone number already exists
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Phone number already exists!'),
             duration: Duration(seconds: 2),
           ),
         );
-        return; // Exit the method without saving to Firestore
+        return;
       }
 
-      // Upload the image to Firebase Storage
-      final storageRef = firebase_storage.FirebaseStorage.instance
+      final storageRef = _firebaseStorage
           .ref()
           .child('visitor_photos')
           .child(DateTime.now().toString());
       final uploadTask = storageRef.putFile(File(_selectedImagePath));
 
-      // Show a loading indicator while uploading
       showDialog(
         context: context,
         builder: (BuildContext context) {
@@ -150,16 +139,12 @@ class _RegistrationFormState extends State<RegistrationForm> {
         },
       );
 
-      // Wait for the upload to complete
       await uploadTask.whenComplete(() => null);
 
-      // Hide the loading indicator
       Navigator.of(context).pop();
 
-      // Get the download URL of the uploaded image
       final imageUrl = await storageRef.getDownloadURL();
 
-      // Continue saving to Firestore if the phone number is unique
       await FirebaseFirestore.instance.collection('visitors').add({
         'full name': _fullNameController.text,
         'phone': phoneNumber,
@@ -167,25 +152,21 @@ class _RegistrationFormState extends State<RegistrationForm> {
         'address': _addressController.text,
         'purpose': _purposeController.text,
         'time': FieldValue.serverTimestamp(),
-        'photo_url':
-            imageUrl, // Save the download URL instead of the local path
+        'photo_url': imageUrl,
       });
 
-      // Clear text fields
       _fullNameController.clear();
       _phoneNumberController.clear();
       _emailController.clear();
       _addressController.clear();
       _purposeController.clear();
 
-      // Clear the selected photo path
       setState(() {
         _selectedImagePath = '';
       });
 
       FocusScope.of(context).unfocus();
 
-      // Show a Snackbar for successful submission
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Successfully submitted!'),
@@ -193,7 +174,6 @@ class _RegistrationFormState extends State<RegistrationForm> {
         ),
       );
 
-      // Print the values if needed
       print('Data saved to Firestore successfully!');
     } catch (e) {
       print('Error saving data to Firestore: $e');
@@ -364,16 +344,13 @@ class _RegistrationFormState extends State<RegistrationForm> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               ElevatedButton(
-                onPressed: _isImageProcessing
-                    ? null
-                    : _pickImage, // Disable button during processing
+                onPressed: _isImageProcessing ? null : _captureImage,
                 style: ElevatedButton.styleFrom(
                   primary: _selectedImagePath.isEmpty
-                      ? Colors.blue // Blue for initial state
+                      ? Colors.blue
                       : _selectedImagePath.isNotEmpty && !_isImageProcessing
-                          ? Colors
-                              .green // Green if photo is selected and not processing
-                          : Colors.red, // Red if there's an error or processing
+                          ? Colors.green
+                          : Colors.red,
                   onPrimary: Colors.white,
                   textStyle: TextStyle(
                     fontFamily: 'Manrope',
@@ -402,10 +379,9 @@ class _RegistrationFormState extends State<RegistrationForm> {
             padding: const EdgeInsets.symmetric(vertical: 16.0),
             child: ElevatedButton(
               onPressed: _selectedImagePath.isEmpty
-                  ? null // Disable the button if no photo is taken
+                  ? null
                   : () {
                       if (_formKey.currentState!.validate()) {
-                        // Form is valid, save data to Firestore
                         _saveDataToFirestore();
                       }
                     },
