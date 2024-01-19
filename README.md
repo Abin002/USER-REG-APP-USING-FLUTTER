@@ -30,4 +30,4 @@ IT HAVE A HIDDEN FEATURE WHERE WE CAN SEE THE USERS IF WE LONG PRESS THE TITLE
 
  # VERSION 1.5
 
- removed app compression so that now camera is working in kiosk 
+ removed app compression so that now camera is working in kiosk . now firebase is a bit lagging . dont know why 

@@ -9,6 +9,7 @@ class LoginAlert extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
+      backgroundColor: Colors.white,
       title: const Text(
         'Login',
         style: TextStyle(fontWeight: FontWeight.bold),
@@ -35,7 +36,7 @@ class _LoginContentState extends State<LoginContent> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: MediaQuery.of(context).size.height * 0.4,
+      height: MediaQuery.of(context).size.height * 0.3,
       child: Column(
         children: [
           // Your login form fields go here

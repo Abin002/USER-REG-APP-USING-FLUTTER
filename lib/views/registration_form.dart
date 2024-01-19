@@ -1,13 +1,11 @@
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:camera/camera.dart';
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'customtextfeild.dart';
-import 'image_compression.dart';
 
 class RegistrationForm extends StatefulWidget {
   @override
@@ -39,7 +37,12 @@ class _RegistrationFormState extends State<RegistrationForm> {
   Future<void> _initializeCamera() async {
     final cameras = await availableCameras();
     _cameraController = CameraController(cameras[0], ResolutionPreset.medium);
+
     await _cameraController.initialize();
+
+    // Set auto exposure mode and flash mode here
+    _cameraController.setExposureMode(ExposureMode.auto);
+    _cameraController.setFlashMode(FlashMode.off);
   }
 
   @override
@@ -85,7 +88,7 @@ class _RegistrationFormState extends State<RegistrationForm> {
 
       setState(() {
         _isImageProcessing = false;
-        _selectedImagePath = capturedImage.path ?? '';
+        _selectedImagePath = capturedImage.path;
       });
     } catch (e) {
       print('Error capturing image: $e');
@@ -111,16 +114,14 @@ class _RegistrationFormState extends State<RegistrationForm> {
         return;
       }
 
-      final storageRef = _firebaseStorage
-          .ref()
-          .child('visitor_photos')
-          .child(DateTime.now().toString());
+      final storageRef = _firebaseStorage.ref().child('visitor_photos').child(
+          DateTime.now().toString() + '.jpg'); // add '.jpg' to the file name
       final uploadTask = storageRef.putFile(File(_selectedImagePath));
 
       showDialog(
         context: context,
         builder: (BuildContext context) {
-          return AlertDialog(
+          return const AlertDialog(
             backgroundColor: Colors.white,
             content: Column(
               mainAxisSize: MainAxisSize.min,
@@ -193,7 +194,7 @@ class _RegistrationFormState extends State<RegistrationForm> {
             labelText: 'Full Name',
             hintText: 'Enter your full name',
             hintStyleFontFamily: 'Manrope',
-            hintStyleColor: Color(0xFF101213),
+            hintStyleColor: const Color(0xFF101213),
             hintStyleFontSize: 16,
             hintStyleFontWeight: FontWeight.normal,
             enabledBorderWidth: 2,
@@ -204,7 +205,7 @@ class _RegistrationFormState extends State<RegistrationForm> {
             contentPaddingTop: 24,
             contentPaddingEnd: 20,
             contentPaddingBottom: 24,
-            style: TextStyle(
+            style: const TextStyle(
               fontFamily: 'Manrope',
               color: Color(0xFF101213),
               fontSize: 14,
@@ -217,7 +218,7 @@ class _RegistrationFormState extends State<RegistrationForm> {
               return null;
             },
           ),
-          SizedBox(
+          const SizedBox(
             height: 8,
           ),
           CustomTextField(
@@ -225,7 +226,7 @@ class _RegistrationFormState extends State<RegistrationForm> {
             labelText: 'Phone Number',
             hintText: 'Enter your phone number',
             hintStyleFontFamily: 'Manrope',
-            hintStyleColor: Color(0xFF101213),
+            hintStyleColor: const Color(0xFF101213),
             hintStyleFontSize: 16,
             hintStyleFontWeight: FontWeight.normal,
             enabledBorderWidth: 2,
@@ -237,7 +238,7 @@ class _RegistrationFormState extends State<RegistrationForm> {
             contentPaddingTop: 24,
             contentPaddingEnd: 20,
             contentPaddingBottom: 24,
-            style: TextStyle(
+            style: const TextStyle(
               fontFamily: 'Manrope',
               color: Color(0xFF101213),
               fontSize: 14,
@@ -245,7 +246,7 @@ class _RegistrationFormState extends State<RegistrationForm> {
             ),
             validator: validatePhone,
           ),
-          SizedBox(
+          const SizedBox(
             height: 8,
           ),
           CustomTextField(
@@ -253,7 +254,7 @@ class _RegistrationFormState extends State<RegistrationForm> {
             labelText: 'Email',
             hintText: 'Enter your email',
             hintStyleFontFamily: 'Manrope',
-            hintStyleColor: Color(0xFF101213),
+            hintStyleColor: const Color(0xFF101213),
             hintStyleFontSize: 16,
             hintStyleFontWeight: FontWeight.normal,
             enabledBorderWidth: 2,
@@ -264,7 +265,7 @@ class _RegistrationFormState extends State<RegistrationForm> {
             contentPaddingTop: 24,
             contentPaddingEnd: 20,
             contentPaddingBottom: 24,
-            style: TextStyle(
+            style: const TextStyle(
               fontFamily: 'Manrope',
               color: Color(0xFF101213),
               fontSize: 14,
@@ -273,7 +274,7 @@ class _RegistrationFormState extends State<RegistrationForm> {
             keyboardType: TextInputType.emailAddress,
             validator: validateEmail,
           ),
-          SizedBox(
+          const SizedBox(
             height: 8,
           ),
           CustomTextField(
@@ -281,7 +282,7 @@ class _RegistrationFormState extends State<RegistrationForm> {
             labelText: 'Address',
             hintText: 'Enter your address',
             hintStyleFontFamily: 'Manrope',
-            hintStyleColor: Color(0xFF101213),
+            hintStyleColor: const Color(0xFF101213),
             hintStyleFontSize: 16,
             hintStyleFontWeight: FontWeight.normal,
             enabledBorderWidth: 2,
@@ -292,7 +293,7 @@ class _RegistrationFormState extends State<RegistrationForm> {
             contentPaddingTop: 24,
             contentPaddingEnd: 20,
             contentPaddingBottom: 24,
-            style: TextStyle(
+            style: const TextStyle(
               fontFamily: 'Manrope',
               color: Color(0xFF101213),
               fontSize: 14,
@@ -305,7 +306,7 @@ class _RegistrationFormState extends State<RegistrationForm> {
               return null;
             },
           ),
-          SizedBox(
+          const SizedBox(
             height: 8,
           ),
           CustomTextField(
@@ -313,7 +314,7 @@ class _RegistrationFormState extends State<RegistrationForm> {
             labelText: 'Purpose of Visit',
             hintText: 'Enter the purpose of your visit',
             hintStyleFontFamily: 'Manrope',
-            hintStyleColor: Color(0xFF101213),
+            hintStyleColor: const Color(0xFF101213),
             hintStyleFontSize: 16,
             hintStyleFontWeight: FontWeight.normal,
             enabledBorderWidth: 2,
@@ -324,7 +325,7 @@ class _RegistrationFormState extends State<RegistrationForm> {
             contentPaddingTop: 24,
             contentPaddingEnd: 20,
             contentPaddingBottom: 24,
-            style: TextStyle(
+            style: const TextStyle(
               fontFamily: 'Manrope',
               color: Color(0xFF101213),
               fontSize: 14,
@@ -337,7 +338,7 @@ class _RegistrationFormState extends State<RegistrationForm> {
               return null;
             },
           ),
-          SizedBox(
+          const SizedBox(
             height: 5,
           ),
           Row(
@@ -346,13 +347,13 @@ class _RegistrationFormState extends State<RegistrationForm> {
               ElevatedButton(
                 onPressed: _isImageProcessing ? null : _captureImage,
                 style: ElevatedButton.styleFrom(
-                  primary: _selectedImagePath.isEmpty
+                  foregroundColor: Colors.white,
+                  backgroundColor: _selectedImagePath.isEmpty
                       ? Colors.blue
                       : _selectedImagePath.isNotEmpty && !_isImageProcessing
                           ? Colors.green
                           : Colors.red,
-                  onPrimary: Colors.white,
-                  textStyle: TextStyle(
+                  textStyle: const TextStyle(
                     fontFamily: 'Manrope',
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -366,11 +367,11 @@ class _RegistrationFormState extends State<RegistrationForm> {
                   padding:
                       const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
                   child: _isImageProcessing
-                      ? CircularProgressIndicator(
+                      ? const CircularProgressIndicator(
                           valueColor:
                               AlwaysStoppedAnimation<Color>(Colors.white),
                         )
-                      : Text('Take Photo'),
+                      : const Text('Take Photo'),
                 ),
               ),
             ],
@@ -386,9 +387,9 @@ class _RegistrationFormState extends State<RegistrationForm> {
                       }
                     },
               style: ElevatedButton.styleFrom(
-                primary: Color(0xFF9489F5),
-                onPrimary: Colors.white,
-                textStyle: TextStyle(
+                foregroundColor: Colors.white,
+                backgroundColor: const Color(0xFF9489F5),
+                textStyle: const TextStyle(
                   fontFamily: 'Manrope',
                   fontSize: 18,
                   fontWeight: FontWeight.w500,
@@ -398,9 +399,9 @@ class _RegistrationFormState extends State<RegistrationForm> {
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 17, top: 17),
-                child: const Center(
+              child: const Padding(
+                padding: EdgeInsets.only(bottom: 17, top: 17),
+                child: Center(
                   child: Text(
                     'Submit',
                     style: TextStyle(fontWeight: FontWeight.bold),

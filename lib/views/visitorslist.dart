@@ -88,7 +88,7 @@ class _VisitorsListState extends State<VisitorsList> {
                       return AlertDialog(
                         title: const Text('Select Time Range'),
                         content: SingleChildScrollView(
-                          child: Container(
+                          child: SizedBox(
                             height: MediaQuery.of(context).size.height * 0.3,
                             child: Column(
                               children: [
