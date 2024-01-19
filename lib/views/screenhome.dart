@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'logo_picker.dart';
+import 'widgets/logo_picker.dart';
 import 'registration_form.dart';
 import 'visitorslist.dart'; // Import the logo picker class
 

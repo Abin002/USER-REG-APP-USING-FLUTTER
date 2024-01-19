@@ -2,10 +2,11 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
 import 'package:camera/camera.dart';
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
-import 'customtextfeild.dart';
+import 'utility_files/camera_utilities.dart';
+import 'widgets/customtextfeild.dart';
+import 'widgets/styled_dropdown.dart';
 
 class RegistrationForm extends StatefulWidget {
   @override
@@ -22,6 +23,9 @@ class _RegistrationFormState extends State<RegistrationForm> {
   late String _selectedImagePath = '';
   late CameraController _cameraController;
   final _firebaseStorage = firebase_storage.FirebaseStorage.instance;
+  late List<String> _idTypes;
+  late String _selectedIdType;
+  late TextEditingController _idNumberController;
 
   @override
   void initState() {
@@ -31,18 +35,14 @@ class _RegistrationFormState extends State<RegistrationForm> {
     _emailController = TextEditingController();
     _addressController = TextEditingController();
     _purposeController = TextEditingController();
+    _idNumberController = TextEditingController();
+    _idTypes = ['Aadhar', 'Driver\'s License'];
+    _selectedIdType = _idTypes[0]; // Initialize with the first ID type
     _initializeCamera();
   }
 
   Future<void> _initializeCamera() async {
-    final cameras = await availableCameras();
-    _cameraController = CameraController(cameras[0], ResolutionPreset.medium);
-
-    await _cameraController.initialize();
-
-    // Set auto exposure mode and flash mode here
-    _cameraController.setExposureMode(ExposureMode.auto);
-    _cameraController.setFlashMode(FlashMode.off);
+    _cameraController = await CameraUtilities.initializeCamera();
   }
 
   @override
@@ -53,6 +53,7 @@ class _RegistrationFormState extends State<RegistrationForm> {
     _addressController.dispose();
     _purposeController.dispose();
     _cameraController.dispose();
+    _idNumberController.dispose();
     super.dispose();
   }
 
@@ -114,8 +115,11 @@ class _RegistrationFormState extends State<RegistrationForm> {
         return;
       }
 
-      final storageRef = _firebaseStorage.ref().child('visitor_photos').child(
-          DateTime.now().toString() + '.jpg'); // add '.jpg' to the file name
+      final storageRef = _firebaseStorage
+          .ref()
+          .child('visitor_photos')
+          .child(DateTime.now().toString() + '.jpg');
+
       final uploadTask = storageRef.putFile(File(_selectedImagePath));
 
       showDialog(
@@ -181,6 +185,24 @@ class _RegistrationFormState extends State<RegistrationForm> {
     }
   }
 
+  Widget _buildIdTypeDropdown() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        CustomDropdown(
+          items: _idTypes,
+          selectedItem: _selectedIdType,
+          onChanged: (String? newValue) {
+            // Updated to accept nullable String
+            setState(() {
+              _selectedIdType = newValue!;
+            });
+          },
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Form(
@@ -218,8 +240,8 @@ class _RegistrationFormState extends State<RegistrationForm> {
               return null;
             },
           ),
-          const SizedBox(
-            height: 8,
+          SizedBox(
+            height: MediaQuery.of(context).size.height * 0.02,
           ),
           CustomTextField(
             controller: _phoneNumberController,
@@ -246,8 +268,8 @@ class _RegistrationFormState extends State<RegistrationForm> {
             ),
             validator: validatePhone,
           ),
-          const SizedBox(
-            height: 8,
+          SizedBox(
+            height: MediaQuery.of(context).size.height * 0.02,
           ),
           CustomTextField(
             controller: _emailController,
@@ -274,8 +296,8 @@ class _RegistrationFormState extends State<RegistrationForm> {
             keyboardType: TextInputType.emailAddress,
             validator: validateEmail,
           ),
-          const SizedBox(
-            height: 8,
+          SizedBox(
+            height: MediaQuery.of(context).size.height * 0.02,
           ),
           CustomTextField(
             controller: _addressController,
@@ -306,8 +328,8 @@ class _RegistrationFormState extends State<RegistrationForm> {
               return null;
             },
           ),
-          const SizedBox(
-            height: 8,
+          SizedBox(
+            height: MediaQuery.of(context).size.height * 0.02,
           ),
           CustomTextField(
             controller: _purposeController,
@@ -338,8 +360,45 @@ class _RegistrationFormState extends State<RegistrationForm> {
               return null;
             },
           ),
-          const SizedBox(
-            height: 5,
+          SizedBox(
+            height: MediaQuery.of(context).size.height * 0.009,
+          ),
+          _buildIdTypeDropdown(),
+          SizedBox(
+            height: MediaQuery.of(context).size.height * 0.009,
+          ),
+          if (_selectedIdType.isNotEmpty)
+            CustomTextField(
+              controller: _idNumberController,
+              labelText: '${_selectedIdType} Number',
+              hintText: 'Enter your ${_selectedIdType} number',
+              hintStyleFontFamily: 'Manrope',
+              hintStyleColor: const Color(0xFF101213),
+              hintStyleFontSize: 16,
+              hintStyleFontWeight: FontWeight.normal,
+              enabledBorderWidth: 2,
+              focusedBorderWidth: 2,
+              errorBorderWidth: 2,
+              focusedErrorBorderWidth: 2,
+              contentPaddingStart: 20,
+              contentPaddingTop: 24,
+              contentPaddingEnd: 20,
+              contentPaddingBottom: 24,
+              style: const TextStyle(
+                fontFamily: 'Manrope',
+                color: Color(0xFF101213),
+                fontSize: 14,
+                fontWeight: FontWeight.normal,
+              ),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please enter your ${_selectedIdType} number';
+                }
+                return null;
+              },
+            ),
+          SizedBox(
+            height: MediaQuery.of(context).size.height * 0.02,
           ),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
