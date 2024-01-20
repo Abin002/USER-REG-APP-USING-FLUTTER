@@ -35,10 +35,10 @@ class _CustomDropdownState extends State<CustomDropdown> {
             onChanged: (String? newValue) {
               widget.onChanged(newValue);
             },
-            icon: Icon(Icons.arrow_drop_down,
+            icon: const Icon(Icons.arrow_drop_down,
                 color: Colors.grey), // Customize the dropdown icon
 
-            style: TextStyle(
+            style: const TextStyle(
               color: Colors.black,
             ),
             underline: Container(),

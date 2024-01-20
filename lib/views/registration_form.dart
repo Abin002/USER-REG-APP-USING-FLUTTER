@@ -1,10 +1,11 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:camera/camera.dart';
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'utility_files/camera_utilities.dart';
+import 'utility_files/validation_functions.dart';
+import 'widgets/custom_sizedbox.dart';
 import 'widgets/customtextfeild.dart';
 import 'widgets/styled_dropdown.dart';
 
@@ -58,24 +59,11 @@ class _RegistrationFormState extends State<RegistrationForm> {
   }
 
   String? validateEmail(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Please enter your email';
-    }
-    if (!RegExp(r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$")
-        .hasMatch(value)) {
-      return 'Please enter a valid email address';
-    }
-    return null;
+    return ValidationFunctions.validateEmail(value);
   }
 
   String? validatePhone(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Please enter your phone number';
-    }
-    if (!RegExp(r"^[0-9]{10}$").hasMatch(value)) {
-      return 'Please enter a valid phone number';
-    }
-    return null;
+    return ValidationFunctions.validatePhone(value);
   }
 
   bool _isImageProcessing = false;
@@ -99,6 +87,7 @@ class _RegistrationFormState extends State<RegistrationForm> {
   Future<void> _saveDataToFirestore() async {
     try {
       final phoneNumber = _phoneNumberController.text;
+      final idNumber = _idNumberController.text;
 
       final querySnapshot = await FirebaseFirestore.instance
           .collection('visitors')
@@ -109,6 +98,22 @@ class _RegistrationFormState extends State<RegistrationForm> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Phone number already exists!'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+        return;
+      }
+      // Check if the ID number already exists for Aadhar or License
+      final idQuerySnapshot = await FirebaseFirestore.instance
+          .collection('visitors')
+          .where('id_type', isEqualTo: _selectedIdType)
+          .where('id_number', isEqualTo: idNumber)
+          .get();
+
+      if (idQuerySnapshot.docs.isNotEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('ID number already exists!'),
             duration: Duration(seconds: 2),
           ),
         );
@@ -158,6 +163,8 @@ class _RegistrationFormState extends State<RegistrationForm> {
         'purpose': _purposeController.text,
         'time': FieldValue.serverTimestamp(),
         'photo_url': imageUrl,
+        'id_type': _selectedIdType, // Add the ID type
+        'id_number': _idNumberController.text, // Add the ID number
       });
 
       _fullNameController.clear();
@@ -165,9 +172,11 @@ class _RegistrationFormState extends State<RegistrationForm> {
       _emailController.clear();
       _addressController.clear();
       _purposeController.clear();
+      _idNumberController.clear();
 
       setState(() {
         _selectedImagePath = '';
+        _selectedIdType = _idTypes[0];
       });
 
       FocusScope.of(context).unfocus();
@@ -215,24 +224,6 @@ class _RegistrationFormState extends State<RegistrationForm> {
             controller: _fullNameController,
             labelText: 'Full Name',
             hintText: 'Enter your full name',
-            hintStyleFontFamily: 'Manrope',
-            hintStyleColor: const Color(0xFF101213),
-            hintStyleFontSize: 16,
-            hintStyleFontWeight: FontWeight.normal,
-            enabledBorderWidth: 2,
-            focusedBorderWidth: 2,
-            errorBorderWidth: 2,
-            focusedErrorBorderWidth: 2,
-            contentPaddingStart: 20,
-            contentPaddingTop: 24,
-            contentPaddingEnd: 20,
-            contentPaddingBottom: 24,
-            style: const TextStyle(
-              fontFamily: 'Manrope',
-              color: Color(0xFF101213),
-              fontSize: 14,
-              fontWeight: FontWeight.normal,
-            ),
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Please enter your full name';
@@ -240,87 +231,27 @@ class _RegistrationFormState extends State<RegistrationForm> {
               return null;
             },
           ),
-          SizedBox(
-            height: MediaQuery.of(context).size.height * 0.02,
-          ),
+          const CustomSizedBox(heightFactor: 0.02),
           CustomTextField(
             controller: _phoneNumberController,
             labelText: 'Phone Number',
             hintText: 'Enter your phone number',
-            hintStyleFontFamily: 'Manrope',
-            hintStyleColor: const Color(0xFF101213),
-            hintStyleFontSize: 16,
-            hintStyleFontWeight: FontWeight.normal,
-            enabledBorderWidth: 2,
-            focusedBorderWidth: 2,
-            errorBorderWidth: 2,
-            focusedErrorBorderWidth: 2,
             keyboardType: TextInputType.phone,
-            contentPaddingStart: 20,
-            contentPaddingTop: 24,
-            contentPaddingEnd: 20,
-            contentPaddingBottom: 24,
-            style: const TextStyle(
-              fontFamily: 'Manrope',
-              color: Color(0xFF101213),
-              fontSize: 14,
-              fontWeight: FontWeight.normal,
-            ),
             validator: validatePhone,
           ),
-          SizedBox(
-            height: MediaQuery.of(context).size.height * 0.02,
-          ),
+          const CustomSizedBox(heightFactor: 0.02),
           CustomTextField(
             controller: _emailController,
             labelText: 'Email',
             hintText: 'Enter your email',
-            hintStyleFontFamily: 'Manrope',
-            hintStyleColor: const Color(0xFF101213),
-            hintStyleFontSize: 16,
-            hintStyleFontWeight: FontWeight.normal,
-            enabledBorderWidth: 2,
-            focusedBorderWidth: 2,
-            errorBorderWidth: 2,
-            focusedErrorBorderWidth: 2,
-            contentPaddingStart: 20,
-            contentPaddingTop: 24,
-            contentPaddingEnd: 20,
-            contentPaddingBottom: 24,
-            style: const TextStyle(
-              fontFamily: 'Manrope',
-              color: Color(0xFF101213),
-              fontSize: 14,
-              fontWeight: FontWeight.normal,
-            ),
             keyboardType: TextInputType.emailAddress,
             validator: validateEmail,
           ),
-          SizedBox(
-            height: MediaQuery.of(context).size.height * 0.02,
-          ),
+          const CustomSizedBox(heightFactor: 0.02),
           CustomTextField(
             controller: _addressController,
             labelText: 'Address',
             hintText: 'Enter your address',
-            hintStyleFontFamily: 'Manrope',
-            hintStyleColor: const Color(0xFF101213),
-            hintStyleFontSize: 16,
-            hintStyleFontWeight: FontWeight.normal,
-            enabledBorderWidth: 2,
-            focusedBorderWidth: 2,
-            errorBorderWidth: 2,
-            focusedErrorBorderWidth: 2,
-            contentPaddingStart: 20,
-            contentPaddingTop: 24,
-            contentPaddingEnd: 20,
-            contentPaddingBottom: 24,
-            style: const TextStyle(
-              fontFamily: 'Manrope',
-              color: Color(0xFF101213),
-              fontSize: 14,
-              fontWeight: FontWeight.normal,
-            ),
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Please enter your address';
@@ -328,31 +259,11 @@ class _RegistrationFormState extends State<RegistrationForm> {
               return null;
             },
           ),
-          SizedBox(
-            height: MediaQuery.of(context).size.height * 0.02,
-          ),
+          const CustomSizedBox(heightFactor: 0.02),
           CustomTextField(
             controller: _purposeController,
             labelText: 'Purpose of Visit',
             hintText: 'Enter the purpose of your visit',
-            hintStyleFontFamily: 'Manrope',
-            hintStyleColor: const Color(0xFF101213),
-            hintStyleFontSize: 16,
-            hintStyleFontWeight: FontWeight.normal,
-            enabledBorderWidth: 2,
-            focusedBorderWidth: 2,
-            errorBorderWidth: 2,
-            focusedErrorBorderWidth: 2,
-            contentPaddingStart: 20,
-            contentPaddingTop: 24,
-            contentPaddingEnd: 20,
-            contentPaddingBottom: 24,
-            style: const TextStyle(
-              fontFamily: 'Manrope',
-              color: Color(0xFF101213),
-              fontSize: 14,
-              fontWeight: FontWeight.normal,
-            ),
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Please enter the purpose of your visit';
@@ -360,46 +271,45 @@ class _RegistrationFormState extends State<RegistrationForm> {
               return null;
             },
           ),
-          SizedBox(
-            height: MediaQuery.of(context).size.height * 0.009,
-          ),
+          const CustomSizedBox(heightFactor: 0.009),
           _buildIdTypeDropdown(),
-          SizedBox(
-            height: MediaQuery.of(context).size.height * 0.009,
-          ),
+          const CustomSizedBox(heightFactor: 0.009),
           if (_selectedIdType.isNotEmpty)
             CustomTextField(
               controller: _idNumberController,
               labelText: '${_selectedIdType} Number',
               hintText: 'Enter your ${_selectedIdType} number',
-              hintStyleFontFamily: 'Manrope',
-              hintStyleColor: const Color(0xFF101213),
-              hintStyleFontSize: 16,
-              hintStyleFontWeight: FontWeight.normal,
-              enabledBorderWidth: 2,
-              focusedBorderWidth: 2,
-              errorBorderWidth: 2,
-              focusedErrorBorderWidth: 2,
-              contentPaddingStart: 20,
-              contentPaddingTop: 24,
-              contentPaddingEnd: 20,
-              contentPaddingBottom: 24,
-              style: const TextStyle(
-                fontFamily: 'Manrope',
-                color: Color(0xFF101213),
-                fontSize: 14,
-                fontWeight: FontWeight.normal,
-              ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
                   return 'Please enter your ${_selectedIdType} number';
                 }
+
+                // Dynamically choose the validation function based on the selected ID type
+                String? Function(String?)? idValidator;
+                switch (_selectedIdType) {
+                  case 'Aadhar':
+                    idValidator = ValidationFunctions.validateAadhar;
+                    break;
+                  case 'Driver\'s License':
+                    idValidator = ValidationFunctions.validateLicense;
+                    break;
+                  // Add more cases for other ID types if needed
+
+                  default:
+                    idValidator = null;
+                    break;
+                }
+
+                // If a validation function is found, apply it
+                if (idValidator != null) {
+                  return idValidator(value);
+                }
+
+                // Return null for other cases (no validation needed)
                 return null;
               },
             ),
-          SizedBox(
-            height: MediaQuery.of(context).size.height * 0.02,
-          ),
+          const CustomSizedBox(heightFactor: 0.02),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [

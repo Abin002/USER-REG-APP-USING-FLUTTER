@@ -8,10 +8,6 @@ class CustomTextField extends StatelessWidget {
   final Color hintStyleColor;
   final double hintStyleFontSize;
   final FontWeight hintStyleFontWeight;
-  final double enabledBorderWidth;
-  final double focusedBorderWidth;
-  final double errorBorderWidth;
-  final double focusedErrorBorderWidth;
   final double contentPaddingStart;
   final double contentPaddingTop;
   final double contentPaddingEnd;
@@ -20,14 +16,20 @@ class CustomTextField extends StatelessWidget {
   final String? Function(String?)? validator;
   final TextInputType? keyboardType; // Added keyboardType parameter
 
+  // Fixed properties with default values
+  final double enabledBorderWidth;
+  final double focusedBorderWidth;
+  final double errorBorderWidth;
+  final double focusedErrorBorderWidth;
+
   const CustomTextField({
     required this.controller,
     required this.labelText,
     required this.hintText,
-    required this.hintStyleFontFamily,
-    required this.hintStyleColor,
-    required this.hintStyleFontSize,
-    required this.hintStyleFontWeight,
+    this.hintStyleFontFamily = 'Manrope',
+    this.hintStyleColor = const Color(0xFF101213),
+    this.hintStyleFontSize = 16,
+    this.hintStyleFontWeight = FontWeight.normal,
     this.enabledBorderWidth = 2,
     this.focusedBorderWidth = 2,
     this.errorBorderWidth = 2,
@@ -36,7 +38,12 @@ class CustomTextField extends StatelessWidget {
     this.contentPaddingTop = 24,
     this.contentPaddingEnd = 20,
     this.contentPaddingBottom = 24,
-    required this.style,
+    this.style = const TextStyle(
+      fontFamily: 'Manrope',
+      color: Color(0xFF101213),
+      fontSize: 14,
+      fontWeight: FontWeight.normal,
+    ),
     required this.validator,
     this.keyboardType, // Updated: Added keyboardType parameter
     Key? key,
@@ -45,10 +52,8 @@ class CustomTextField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(
-        left: MediaQuery.of(context).size.width * 0.02,
-        right: MediaQuery.of(context).size.width * 0.02,
-      ),
+      padding: EdgeInsets.symmetric(
+          horizontal: MediaQuery.of(context).size.width * 0.02),
       child: TextFormField(
         controller: controller,
         obscureText: false,

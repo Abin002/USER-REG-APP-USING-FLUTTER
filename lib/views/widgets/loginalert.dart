@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
+import 'custom_sizedbox.dart';
+
 class LoginAlert extends StatelessWidget {
   final Function(String)? onImageSelected;
 
@@ -35,8 +37,8 @@ class _LoginContentState extends State<LoginContent> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.3,
+    return IntrinsicHeight(
+      // height: double.infinity,
       child: Column(
         children: [
           // Your login form fields go here
@@ -75,9 +77,7 @@ class _LoginContentState extends State<LoginContent> {
               fontWeight: FontWeight.normal,
             ),
           ),
-          const SizedBox(
-            height: 10,
-          ),
+          const CustomSizedBox(heightFactor: 0.02),
           TextFormField(
             controller: _passwordController,
             decoration: InputDecoration(
@@ -114,9 +114,7 @@ class _LoginContentState extends State<LoginContent> {
             ),
             obscureText: true,
           ),
-          const SizedBox(
-            height: 10,
-          ),
+          const CustomSizedBox(heightFactor: 0.02),
           ElevatedButton(
             onPressed: () async {
               // Validate credentials
