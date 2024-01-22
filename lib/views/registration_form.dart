@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:camera/camera.dart';
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'utility_files/camera_utilities.dart';
+import 'utility_files/device_info_helper.dart';
 import 'utility_files/validation_functions.dart';
 import 'widgets/custom_sizedbox.dart';
 import 'widgets/customtextfeild.dart';
@@ -16,6 +17,7 @@ class RegistrationForm extends StatefulWidget {
 
 class _RegistrationFormState extends State<RegistrationForm> {
   final _formKey = GlobalKey<FormState>();
+
   late TextEditingController _fullNameController;
   late TextEditingController _phoneNumberController;
   late TextEditingController _emailController;
@@ -27,10 +29,13 @@ class _RegistrationFormState extends State<RegistrationForm> {
   late List<String> _idTypes;
   late String _selectedIdType;
   late TextEditingController _idNumberController;
+  late DeviceInfoHelper _deviceInfoHelper;
 
   @override
   void initState() {
     super.initState();
+    _deviceInfoHelper = DeviceInfoHelper();
+
     _fullNameController = TextEditingController();
     _phoneNumberController = TextEditingController();
     _emailController = TextEditingController();
@@ -165,6 +170,7 @@ class _RegistrationFormState extends State<RegistrationForm> {
         'photo_url': imageUrl,
         'id_type': _selectedIdType, // Add the ID type
         'id_number': _idNumberController.text, // Add the ID number
+        'device name': await _deviceInfoHelper.getAndroidDeviceInfo()
       });
 
       _fullNameController.clear();

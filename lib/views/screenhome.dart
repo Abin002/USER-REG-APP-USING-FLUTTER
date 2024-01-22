@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'widgets/logo_picker.dart';
 import 'registration_form.dart';
-import 'visitorslist.dart'; // Import the logo picker class
+import 'visitorslist.dart';
 
 class ScreenHome extends StatefulWidget {
   const ScreenHome({Key? key}) : super(key: key);
@@ -20,6 +20,7 @@ class _ScreenHomeState extends State<ScreenHome> {
   @override
   void initState() {
     super.initState();
+
     _loadSelectedLogoPath();
     _logoPicker = LogoPicker(
       context: context,
