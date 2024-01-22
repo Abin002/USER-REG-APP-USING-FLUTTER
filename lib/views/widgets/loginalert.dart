@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'custom_sizedbox.dart';
@@ -34,14 +35,13 @@ class _LoginContentState extends State<LoginContent> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final ImagePicker _imagePicker = ImagePicker();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   @override
   Widget build(BuildContext context) {
     return IntrinsicHeight(
-      // height: double.infinity,
       child: Column(
         children: [
-          // Your login form fields go here
           TextFormField(
             controller: _usernameController,
             decoration: InputDecoration(
@@ -55,7 +55,7 @@ class _LoginContentState extends State<LoginContent> {
               ),
               enabledBorder: OutlineInputBorder(
                 borderSide: const BorderSide(
-                  color: Colors.grey, // Set to default dark grey color
+                  color: Colors.grey,
                   width: 2,
                 ),
                 borderRadius: BorderRadius.circular(10),
@@ -91,7 +91,7 @@ class _LoginContentState extends State<LoginContent> {
               ),
               enabledBorder: OutlineInputBorder(
                 borderSide: const BorderSide(
-                  color: Colors.grey, // Set to default dark grey color
+                  color: Colors.grey,
                   width: 2,
                 ),
                 borderRadius: BorderRadius.circular(10),
@@ -117,15 +117,17 @@ class _LoginContentState extends State<LoginContent> {
           const CustomSizedBox(heightFactor: 0.02),
           ElevatedButton(
             onPressed: () async {
-              // Validate credentials
-              if (_usernameController.text == 'admin' &&
-                  _passwordController.text == 'admin123') {
-                // If credentials are valid, show image picker
+              try {
+                UserCredential userCredential =
+                    await _auth.signInWithEmailAndPassword(
+                  email: _usernameController.text,
+                  password: _passwordController.text,
+                );
+
                 final pickedFile =
                     await _imagePicker.pickImage(source: ImageSource.gallery);
 
                 if (pickedFile != null) {
-                  // Update UI with the selected image
                   widget.onImageSelected?.call(pickedFile.path);
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -135,12 +137,12 @@ class _LoginContentState extends State<LoginContent> {
                     ),
                   );
                 }
-                Navigator.pop(context); // Close the alert dialog
-              } else {
-                // If credentials are invalid, show an error message
+
+                Navigator.pop(context);
+              } catch (e) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Invalid credentials. Please try again.'),
+                  SnackBar(
+                    content: Text('Authentication failed. Please try again.'),
                     duration: Duration(seconds: 2),
                   ),
                 );
