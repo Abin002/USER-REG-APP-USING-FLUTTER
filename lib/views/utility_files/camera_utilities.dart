@@ -23,5 +23,6 @@ class CameraUtilities {
     } catch (e) {
       print('Error capturing image: $e');
     }
+    cameraController.dispose();
   }
 }

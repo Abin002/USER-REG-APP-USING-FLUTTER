@@ -141,7 +141,7 @@ class _LoginContentState extends State<LoginContent> {
                 Navigator.pop(context);
               } catch (e) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
+                  const SnackBar(
                     content: Text('Authentication failed. Please try again.'),
                     duration: Duration(seconds: 2),
                   ),

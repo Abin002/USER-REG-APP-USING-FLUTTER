@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:ui_smartech/views/widgets/printservices.dart';
 
 import 'widgets/logo_picker.dart';
 import 'registration_form.dart';
@@ -68,6 +69,13 @@ class _ScreenHomeState extends State<ScreenHome> {
                           highlightColor: Colors.transparent,
                           splashColor: Colors.transparent,
                           focusColor: Colors.transparent,
+                          onDoubleTap: () {
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const PrintServices(),
+                                ));
+                          },
                           onLongPress: _pickLogo,
                           child: _selectedLogoPath.isNotEmpty
                               ? ClipOval(
@@ -102,7 +110,7 @@ class _ScreenHomeState extends State<ScreenHome> {
                       ),
                     ),
                     const SizedBox(height: 16.0),
-                    SingleChildScrollView(
+                    const SingleChildScrollView(
                       child: RegistrationForm(),
                     ),
                   ],

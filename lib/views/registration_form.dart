@@ -1,16 +1,22 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:camera/camera.dart';
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
+import 'package:ui_smartech/views/widgets/printservices.dart';
+
 import 'utility_files/camera_utilities.dart';
 import 'utility_files/device_info_helper.dart';
+
 import 'utility_files/validation_functions.dart';
 import 'widgets/custom_sizedbox.dart';
 import 'widgets/customtextfeild.dart';
 import 'widgets/styled_dropdown.dart';
 
 class RegistrationForm extends StatefulWidget {
+  const RegistrationForm({super.key});
+
   @override
   _RegistrationFormState createState() => _RegistrationFormState();
 }
@@ -23,13 +29,14 @@ class _RegistrationFormState extends State<RegistrationForm> {
   late TextEditingController _emailController;
   late TextEditingController _addressController;
   late TextEditingController _purposeController;
-  late String _selectedImagePath = '';
+  late String selectedImagePath = '';
   late CameraController _cameraController;
   final _firebaseStorage = firebase_storage.FirebaseStorage.instance;
   late List<String> _idTypes;
   late String _selectedIdType;
   late TextEditingController _idNumberController;
   late DeviceInfoHelper _deviceInfoHelper;
+  PrintServicesState printServices = PrintServicesState();
 
   @override
   void initState() {
@@ -82,7 +89,7 @@ class _RegistrationFormState extends State<RegistrationForm> {
 
       setState(() {
         _isImageProcessing = false;
-        _selectedImagePath = capturedImage.path;
+        selectedImagePath = capturedImage.path;
       });
     } catch (e) {
       print('Error capturing image: $e');
@@ -108,7 +115,7 @@ class _RegistrationFormState extends State<RegistrationForm> {
         );
         return;
       }
-      // Check if the ID number already exists for Aadhar or License
+
       final idQuerySnapshot = await FirebaseFirestore.instance
           .collection('visitors')
           .where('id_type', isEqualTo: _selectedIdType)
@@ -128,9 +135,9 @@ class _RegistrationFormState extends State<RegistrationForm> {
       final storageRef = _firebaseStorage
           .ref()
           .child('visitor_photos')
-          .child(DateTime.now().toString() + '.jpg');
+          .child('${DateTime.now()}.jpg');
 
-      final uploadTask = storageRef.putFile(File(_selectedImagePath));
+      final uploadTask = storageRef.putFile(File(selectedImagePath));
 
       showDialog(
         context: context,
@@ -168,10 +175,20 @@ class _RegistrationFormState extends State<RegistrationForm> {
         'purpose': _purposeController.text,
         'time': FieldValue.serverTimestamp(),
         'photo_url': imageUrl,
-        'id_type': _selectedIdType, // Add the ID type
-        'id_number': _idNumberController.text, // Add the ID number
-        'device name': await _deviceInfoHelper.getAndroidDeviceInfo()
+        'id_type': _selectedIdType,
+        'id_number': _idNumberController.text,
+        'device name': await _deviceInfoHelper.getAndroidDeviceInfo(),
       });
+
+      printServices.printTicket(
+          fullName: _fullNameController.text,
+          phoneNumber: _phoneNumberController.text,
+          email: _emailController.text,
+          address: _addressController.text,
+          purpose: _purposeController.text,
+          idType: _selectedIdType,
+          idNumber: _idNumberController.text,
+          urlimage: imageUrl);
 
       _fullNameController.clear();
       _phoneNumberController.clear();
@@ -181,7 +198,7 @@ class _RegistrationFormState extends State<RegistrationForm> {
       _idNumberController.clear();
 
       setState(() {
-        _selectedImagePath = '';
+        selectedImagePath = '';
         _selectedIdType = _idTypes[0];
       });
 
@@ -194,9 +211,9 @@ class _RegistrationFormState extends State<RegistrationForm> {
         ),
       );
 
-      print('Data saved to Firestore successfully!');
+      print('Data saved to Firestore and printed successfully!');
     } catch (e) {
-      print('Error saving data to Firestore: $e');
+      print('Error saving data to Firestore or printing: $e');
     }
   }
 
@@ -208,7 +225,6 @@ class _RegistrationFormState extends State<RegistrationForm> {
           items: _idTypes,
           selectedItem: _selectedIdType,
           onChanged: (String? newValue) {
-            // Updated to accept nullable String
             setState(() {
               _selectedIdType = newValue!;
             });
@@ -283,14 +299,13 @@ class _RegistrationFormState extends State<RegistrationForm> {
           if (_selectedIdType.isNotEmpty)
             CustomTextField(
               controller: _idNumberController,
-              labelText: '${_selectedIdType} Number',
-              hintText: 'Enter your ${_selectedIdType} number',
+              labelText: '$_selectedIdType Number',
+              hintText: 'Enter your $_selectedIdType number',
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Please enter your ${_selectedIdType} number';
+                  return 'Please enter your $_selectedIdType number';
                 }
 
-                // Dynamically choose the validation function based on the selected ID type
                 String? Function(String?)? idValidator;
                 switch (_selectedIdType) {
                   case 'Aadhar':
@@ -299,19 +314,15 @@ class _RegistrationFormState extends State<RegistrationForm> {
                   case 'Driver\'s License':
                     idValidator = ValidationFunctions.validateLicense;
                     break;
-                  // Add more cases for other ID types if needed
-
                   default:
                     idValidator = null;
                     break;
                 }
 
-                // If a validation function is found, apply it
                 if (idValidator != null) {
                   return idValidator(value);
                 }
 
-                // Return null for other cases (no validation needed)
                 return null;
               },
             ),
@@ -323,9 +334,9 @@ class _RegistrationFormState extends State<RegistrationForm> {
                 onPressed: _isImageProcessing ? null : _captureImage,
                 style: ElevatedButton.styleFrom(
                   foregroundColor: Colors.white,
-                  backgroundColor: _selectedImagePath.isEmpty
+                  backgroundColor: selectedImagePath.isEmpty
                       ? Colors.blue
-                      : _selectedImagePath.isNotEmpty && !_isImageProcessing
+                      : selectedImagePath.isNotEmpty && !_isImageProcessing
                           ? Colors.green
                           : Colors.red,
                   textStyle: const TextStyle(
@@ -354,7 +365,7 @@ class _RegistrationFormState extends State<RegistrationForm> {
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 16.0),
             child: ElevatedButton(
-              onPressed: _selectedImagePath.isEmpty
+              onPressed: selectedImagePath.isEmpty
                   ? null
                   : () {
                       if (_formKey.currentState!.validate()) {
