@@ -1,4 +1,5 @@
-// device_info_helper.dart
+// ignore_for_file: avoid_print
+
 import 'package:device_info_plus/device_info_plus.dart';
 
 class DeviceInfoHelper {
@@ -7,7 +8,7 @@ class DeviceInfoHelper {
   Future<String> getAndroidDeviceInfo() async {
     try {
       AndroidDeviceInfo androidInfo = await _deviceInfo.androidInfo;
-      String deviceName = androidInfo.model ?? 'Unknown Android Device';
+      String deviceName = androidInfo.model;
 
       return deviceName;
     } catch (e) {

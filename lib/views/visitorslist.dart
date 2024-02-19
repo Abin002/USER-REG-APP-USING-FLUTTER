@@ -1,8 +1,10 @@
+// ignore_for_file: avoid_print
 import 'dart:async';
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
-
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:get/get.dart';
+import 'package:ui_smartech/views/screenhome.dart';
 
 class VisitorsList extends StatefulWidget {
   const VisitorsList({Key? key}) : super(key: key);
@@ -71,6 +73,13 @@ class _VisitorsListState extends State<VisitorsList> {
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(
+              Icons.arrow_back), // or Icons.chevron_left for iOS style
+          onPressed: () {
+            Get.offAll(() => const ScreenHome());
+          },
+        ),
         backgroundColor: Colors.grey.shade100,
         title: const Text(
           'VISITORS LIST',
@@ -88,63 +97,67 @@ class _VisitorsListState extends State<VisitorsList> {
                       return AlertDialog(
                         title: const Text('Select Time Range'),
                         content: SingleChildScrollView(
-                          child: SizedBox(
-                            height: MediaQuery.of(context).size.height * 0.3,
-                            child: Column(
-                              children: [
-                                Card(
-                                  child: ListTile(
-                                    title: const Text('Start Date:'),
-                                    subtitle: InkWell(
-                                      onTap: () async {
-                                        DateTime? picked = await showDatePicker(
-                                          context: context,
-                                          initialDate: startDate,
-                                          firstDate: DateTime(2000),
-                                          lastDate: DateTime(2101),
-                                        );
-                                        if (picked != null &&
-                                            picked != startDate) {
-                                          setState(() {
-                                            startDate = picked;
-                                            startDateController.text =
-                                                "${startDate.day}-${startDate.month}-${startDate.year}";
-                                          });
-                                        }
-                                      },
-                                      child: Text(
-                                        "${startDate.day}-${startDate.month}-${startDate.year}",
+                          child: IntrinsicHeight(
+                            child: SizedBox(
+                              height: MediaQuery.of(context).size.height * 0.3,
+                              child: Column(
+                                children: [
+                                  Card(
+                                    child: ListTile(
+                                      title: const Text('Start Date:'),
+                                      subtitle: InkWell(
+                                        onTap: () async {
+                                          DateTime? picked =
+                                              await showDatePicker(
+                                            context: context,
+                                            initialDate: startDate,
+                                            firstDate: DateTime(2000),
+                                            lastDate: DateTime(2101),
+                                          );
+                                          if (picked != null &&
+                                              picked != startDate) {
+                                            setState(() {
+                                              startDate = picked;
+                                              startDateController.text =
+                                                  "${startDate.day}-${startDate.month}-${startDate.year}";
+                                            });
+                                          }
+                                        },
+                                        child: Text(
+                                          "${startDate.day}-${startDate.month}-${startDate.year}",
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                                Card(
-                                  child: ListTile(
-                                    title: const Text('End Date:'),
-                                    subtitle: InkWell(
-                                      onTap: () async {
-                                        DateTime? picked = await showDatePicker(
-                                          context: context,
-                                          initialDate: endDate,
-                                          firstDate: DateTime(2000),
-                                          lastDate: DateTime(2101),
-                                        );
-                                        if (picked != null &&
-                                            picked != endDate) {
-                                          setState(() {
-                                            endDate = picked;
-                                            endDateController.text =
-                                                "${endDate.day}-${endDate.month}-${endDate.year}";
-                                          });
-                                        }
-                                      },
-                                      child: Text(
-                                        "${endDate.day}-${endDate.month}-${endDate.year}",
+                                  Card(
+                                    child: ListTile(
+                                      title: const Text('End Date:'),
+                                      subtitle: InkWell(
+                                        onTap: () async {
+                                          DateTime? picked =
+                                              await showDatePicker(
+                                            context: context,
+                                            initialDate: endDate,
+                                            firstDate: DateTime(2000),
+                                            lastDate: DateTime(2101),
+                                          );
+                                          if (picked != null &&
+                                              picked != endDate) {
+                                            setState(() {
+                                              endDate = picked;
+                                              endDateController.text =
+                                                  "${endDate.day}-${endDate.month}-${endDate.year}";
+                                            });
+                                          }
+                                        },
+                                        child: Text(
+                                          "${endDate.day}-${endDate.month}-${endDate.year}",
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
                         ),

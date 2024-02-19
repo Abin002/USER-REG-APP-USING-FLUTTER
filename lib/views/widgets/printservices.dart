@@ -1,7 +1,11 @@
+// ignore_for_file: avoid_print
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'package:esc_pos_utils/esc_pos_utils.dart';
 import 'package:bluetooth_thermal_printer/bluetooth_thermal_printer.dart';
-import 'package:flutter/services.dart';
 import 'package:image/image.dart';
 
 class PrintServices extends StatefulWidget {
@@ -12,25 +16,72 @@ class PrintServices extends StatefulWidget {
 }
 
 class PrintServicesState extends State<PrintServices> {
-  @override
-  void initState() {
-    super.initState();
-  }
-
   bool connected = false;
   List availableBluetoothDevices = [];
 
+  @override
+  void initState() {
+    super.initState();
+    ensureBluetoothEnabled();
+  }
+
+  Future<void> ensureBluetoothEnabled() async {
+    final PermissionStatus status = await Permission.bluetooth.status;
+    if (!status.isGranted) {
+      final PermissionStatus result = await Permission.bluetooth.request();
+      if (!result.isGranted) {
+        return;
+      }
+    }
+
+    bool? isEnabled = await FlutterBluetoothSerial.instance.isEnabled;
+    if (isEnabled!) {
+      getBluetooth();
+    } else {
+      showEnableBluetoothDialog();
+    }
+  }
+
+  void showEnableBluetoothDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.white,
+          title: const Text('Enable Bluetooth'),
+          content: const Text(
+              'Bluetooth is currently disabled. Do you want to enable it?'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('No'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Yes'),
+              onPressed: () async {
+                await FlutterBluetoothSerial.instance.requestEnable();
+                Navigator.of(context).pop();
+                getBluetooth();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> getBluetooth() async {
     final List? bluetooths = await BluetoothThermalPrinter.getBluetooths;
-    print("Print $bluetooths");
     setState(() {
-      availableBluetoothDevices = bluetooths!;
+      availableBluetoothDevices = bluetooths ?? [];
     });
   }
 
   Future<void> setConnect(String mac) async {
     final String? result = await BluetoothThermalPrinter.connect(mac);
-    print("state conneected $result");
     if (result == "true") {
       setState(() {
         connected = true;
@@ -66,7 +117,7 @@ class PrintServicesState extends State<PrintServices> {
       print("Print $result");
     } else {
       print('printer not connected');
-      //Hadnle Not Connected Senario
+      // Handle Not Connected Scenario
     }
   }
 
@@ -162,15 +213,12 @@ class PrintServicesState extends State<PrintServices> {
             Expanded(
               child: SizedBox(
                 child: ListView.builder(
-                  itemCount: availableBluetoothDevices.isNotEmpty
-                      ? availableBluetoothDevices.length
-                      : 0,
+                  itemCount: availableBluetoothDevices.length,
                   itemBuilder: (context, index) {
                     return ListTile(
                       onTap: () {
                         String select = availableBluetoothDevices[index];
                         List list = select.split("#");
-                        // String name = list[0];
                         String mac = list[1];
                         setConnect(mac);
                       },

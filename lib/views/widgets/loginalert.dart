@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
@@ -45,8 +47,8 @@ class _LoginContentState extends State<LoginContent> {
           TextFormField(
             controller: _usernameController,
             decoration: InputDecoration(
-              labelText: 'Username',
-              hintText: 'Enter your username',
+              labelText: 'Email',
+              hintText: 'Enter your Email',
               hintStyle: const TextStyle(
                 fontFamily: 'Manrope',
                 color: Color(0xFF101213),
@@ -123,6 +125,7 @@ class _LoginContentState extends State<LoginContent> {
                   email: _usernameController.text,
                   password: _passwordController.text,
                 );
+                print('User credential: ${userCredential.user}');
 
                 final pickedFile =
                     await _imagePicker.pickImage(source: ImageSource.gallery);

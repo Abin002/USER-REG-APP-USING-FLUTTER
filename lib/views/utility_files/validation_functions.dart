@@ -31,14 +31,12 @@ class ValidationFunctions {
   }
 
   static String? validateLicense(String? value) {
-    // Trim extra spaces
     value = value?.trim();
 
     if (value == null || value.isEmpty) {
       return 'Please enter your License number';
     }
 
-    // Define the pattern for Indian driving license numbers
     RegExp licensePattern = RegExp(r"^[A-Z]{2}\d{13}$");
 
     if (!licensePattern.hasMatch(value)) {

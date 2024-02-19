@@ -14,7 +14,9 @@ class CustomTextField extends StatelessWidget {
   final double contentPaddingBottom;
   final TextStyle style;
   final String? Function(String?)? validator;
-  final TextInputType? keyboardType; // Added keyboardType parameter
+  final TextInputType? keyboardType;
+  final VoidCallback? onEditingComplete;
+  final int? maxLength; // Added maxLength parameter
 
   // Fixed properties with default values
   final double enabledBorderWidth;
@@ -45,7 +47,9 @@ class CustomTextField extends StatelessWidget {
       fontWeight: FontWeight.normal,
     ),
     required this.validator,
-    this.keyboardType, // Updated: Added keyboardType parameter
+    this.keyboardType,
+    this.onEditingComplete,
+    this.maxLength, // Added maxLength parameter
     Key? key,
   }) : super(key: key);
 
@@ -57,53 +61,55 @@ class CustomTextField extends StatelessWidget {
       child: TextFormField(
         controller: controller,
         obscureText: false,
-        keyboardType: keyboardType, // Updated: Set the keyboardType
+        keyboardType: keyboardType,
+        maxLength: maxLength, // Set the maxLength property
         decoration: InputDecoration(
-          labelText: labelText,
-          hintText: hintText,
-          hintStyle: TextStyle(
-            fontFamily: hintStyleFontFamily,
-            color: hintStyleColor,
-            fontSize: hintStyleFontSize,
-            fontWeight: hintStyleFontWeight,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderSide: BorderSide(
-              color: Colors.grey, // Set to default dark grey color
-              width: enabledBorderWidth,
+            labelText: labelText,
+            hintText: hintText,
+            hintStyle: TextStyle(
+              fontFamily: hintStyleFontFamily,
+              color: hintStyleColor,
+              fontSize: hintStyleFontSize,
+              fontWeight: hintStyleFontWeight,
             ),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderSide: BorderSide(
-              color: Theme.of(context).primaryColor,
-              width: focusedBorderWidth,
+            enabledBorder: OutlineInputBorder(
+              borderSide: BorderSide(
+                color: Colors.grey,
+                width: enabledBorderWidth,
+              ),
+              borderRadius: BorderRadius.circular(10),
             ),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          errorBorder: OutlineInputBorder(
-            borderSide: BorderSide(
-              color: Colors.red,
-              width: errorBorderWidth,
+            focusedBorder: OutlineInputBorder(
+              borderSide: BorderSide(
+                color: Theme.of(context).primaryColor,
+                width: focusedBorderWidth,
+              ),
+              borderRadius: BorderRadius.circular(10),
             ),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          focusedErrorBorder: OutlineInputBorder(
-            borderSide: BorderSide(
-              color: Theme.of(context).colorScheme.error,
-              width: focusedErrorBorderWidth,
+            errorBorder: OutlineInputBorder(
+              borderSide: BorderSide(
+                color: Colors.red,
+                width: errorBorderWidth,
+              ),
+              borderRadius: BorderRadius.circular(10),
             ),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          contentPadding: EdgeInsetsDirectional.fromSTEB(
-            contentPaddingStart,
-            contentPaddingTop,
-            contentPaddingEnd,
-            contentPaddingBottom,
-          ),
-        ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderSide: BorderSide(
+                color: Theme.of(context).colorScheme.error,
+                width: focusedErrorBorderWidth,
+              ),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            contentPadding: EdgeInsetsDirectional.fromSTEB(
+              contentPaddingStart,
+              contentPaddingTop,
+              contentPaddingEnd,
+              contentPaddingBottom,
+            ),
+            counter: const SizedBox.shrink()),
         style: style,
         validator: validator,
+        onEditingComplete: onEditingComplete,
       ),
     );
   }

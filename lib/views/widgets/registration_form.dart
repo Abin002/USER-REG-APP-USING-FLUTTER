@@ -1,27 +1,31 @@
+// ignore_for_file: avoid_print
+
 import 'dart:async';
 import 'dart:io';
+import 'package:esc_pos_utils/esc_pos_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:camera/camera.dart';
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
+import 'package:flutter_pos_printer_platform_image_3/discovery.dart';
+import 'package:flutter_pos_printer_platform_image_3/flutter_pos_printer_platform_image_3.dart';
+
 import 'package:ui_smartech/views/widgets/printservices.dart';
-
-import 'utility_files/camera_utilities.dart';
-import 'utility_files/device_info_helper.dart';
-
-import 'utility_files/validation_functions.dart';
-import 'widgets/custom_sizedbox.dart';
-import 'widgets/customtextfeild.dart';
-import 'widgets/styled_dropdown.dart';
+import '../utility_files/camera_utilities.dart';
+import '../utility_files/device_info_helper.dart';
+import '../utility_files/validation_functions.dart';
+import 'custom_sizedbox.dart';
+import 'customtextfeild.dart';
+import 'styled_dropdown.dart';
 
 class RegistrationForm extends StatefulWidget {
-  const RegistrationForm({super.key});
+  const RegistrationForm({Key? key}) : super(key: key);
 
   @override
-  _RegistrationFormState createState() => _RegistrationFormState();
+  RegistrationFormState createState() => RegistrationFormState();
 }
 
-class _RegistrationFormState extends State<RegistrationForm> {
+class RegistrationFormState extends State<RegistrationForm> {
   final _formKey = GlobalKey<FormState>();
 
   late TextEditingController _fullNameController;
@@ -38,9 +42,13 @@ class _RegistrationFormState extends State<RegistrationForm> {
   late DeviceInfoHelper _deviceInfoHelper;
   PrintServicesState printServices = PrintServicesState();
 
+  bool connected = false;
+
   @override
   void initState() {
     super.initState();
+    _initializeCamera();
+    connectToUsbPrinter(context);
     _deviceInfoHelper = DeviceInfoHelper();
 
     _fullNameController = TextEditingController();
@@ -51,11 +59,173 @@ class _RegistrationFormState extends State<RegistrationForm> {
     _idNumberController = TextEditingController();
     _idTypes = ['Aadhar', 'Driver\'s License'];
     _selectedIdType = _idTypes[0]; // Initialize with the first ID type
-    _initializeCamera();
   }
 
   Future<void> _initializeCamera() async {
     _cameraController = await CameraUtilities.initializeCamera();
+  }
+
+  Future<void> connectToUsbPrinter(BuildContext context) async {
+    print('trying to connect......');
+    // Fetch list of available USB devices initially
+    final List<PrinterDiscovered<UsbPrinterInfo>> result =
+        await UsbPrinterConnector.discoverPrinters();
+    if (result.isNotEmpty) {
+      print(result);
+      // Connect to the first available USB device
+      final device = result.first.detail;
+      print(device);
+      await connectToDevice(device);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Printer connected!'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No usb printers found'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  Future<void> connectToDevice(UsbPrinterInfo device) async {
+    try {
+      await UsbPrinterConnector.instance.connect(UsbPrinterInput(
+        name: device.name,
+        vendorId: device.vendorId,
+        productId: device.productId,
+      ));
+      if (mounted) {
+        print('connecting to ${device.name}');
+        setState(() {
+          connected = true;
+        });
+        print('connecting to ${device.name}');
+      }
+    } catch (e) {
+      print("Error connecting to USB device: $e");
+    }
+  }
+
+  Future<void> printTicket({
+    String? fullName,
+    String? phoneNumber,
+    String? email,
+    String? address,
+    String? purpose,
+    String? idType,
+    String? idNumber,
+  }) async {
+    try {
+      if (connected) {
+        // USB printer is connected, print the ticket
+        await _printTicket();
+      } else {
+        // USB printer is not connected, attempt to connect and print
+        final result = await UsbPrinterConnector.discoverPrinters();
+        if (result.isNotEmpty) {
+          // Connect to the first available USB device
+          final device = result.first.detail;
+          await connectToDevice(device);
+          if (connected) {
+            // Successfully connected, print the ticket
+            await _printTicket();
+          } else {
+            // Failed to connect
+            print("failed to connect ");
+          }
+        } else {
+          print('no printers found');
+        }
+      }
+    } catch (e) {
+      // Handle exceptions
+      print("Error printing ticket: $e");
+    }
+  }
+
+  Future<void> _printTicket() async {
+    final ticketContent = await generateTicketContent(
+      fullName: _fullNameController.text,
+      phoneNumber: _phoneNumberController.text,
+      email: _emailController.text,
+      address: _addressController.text,
+      purpose: _purposeController.text,
+      idType: _selectedIdType,
+      idNumber: _idNumberController.text,
+    );
+
+    // Print the ticket
+    await PrinterManager.instance.send(
+      type: PrinterType.usb,
+      bytes: ticketContent.codeUnits,
+    );
+  }
+
+  Future<String> generateTicketContent({
+    required String fullName,
+    required String phoneNumber,
+    required String email,
+    required String address,
+    required String purpose,
+    required String idType,
+    required String idNumber,
+  }) async {
+    List<int> bytes = [];
+    CapabilityProfile profile = await CapabilityProfile.load();
+    final generator = Generator(PaperSize.mm80, profile);
+
+    // Add a heading
+    bytes += generator.text("User Details",
+        styles: const PosStyles(
+          align: PosAlign.center,
+          bold: true,
+          height: PosTextSize.size2,
+          width: PosTextSize.size2,
+        ),
+        linesAfter: 1);
+
+    // Adding user details to the ticket
+    bytes += generator.text("Full Name: $fullName",
+        styles: const PosStyles(align: PosAlign.left), linesAfter: 1);
+
+    bytes += generator.text("Phone: $phoneNumber",
+        styles: const PosStyles(align: PosAlign.left), linesAfter: 1);
+
+    bytes += generator.text("Email: $email",
+        styles: const PosStyles(align: PosAlign.left), linesAfter: 1);
+
+    bytes += generator.text("Address: $address",
+        styles: const PosStyles(align: PosAlign.left), linesAfter: 1);
+
+    bytes += generator.text("Purpose: $purpose",
+        styles: const PosStyles(align: PosAlign.left), linesAfter: 1);
+
+    bytes += generator.text("ID Type: $idType",
+        styles: const PosStyles(align: PosAlign.left), linesAfter: 1);
+
+    bytes += generator.text("ID Number: $idNumber",
+        styles: const PosStyles(align: PosAlign.left), linesAfter: 1);
+
+    // Add margin lines
+    bytes += generator.text(" " * 32,
+        styles: const PosStyles(align: PosAlign.left), linesAfter: 1);
+
+    // Add a closing message
+    bytes += generator.text("Thanks for Visiting!",
+        styles: const PosStyles(align: PosAlign.center, bold: true),
+        linesAfter: 1);
+
+    // Additional formatting as needed
+    bytes += generator.cut();
+
+    String ticketContent = String.fromCharCodes(bytes);
+
+    return ticketContent;
   }
 
   @override
@@ -163,7 +333,7 @@ class _RegistrationFormState extends State<RegistrationForm> {
 
       await uploadTask.whenComplete(() => null);
 
-      Navigator.of(context).pop();
+      // await printTicket();
 
       final imageUrl = await storageRef.getDownloadURL();
 
@@ -201,6 +371,8 @@ class _RegistrationFormState extends State<RegistrationForm> {
         selectedImagePath = '';
         _selectedIdType = _idTypes[0];
       });
+
+      Navigator.of(context).pop();
 
       FocusScope.of(context).unfocus();
 
@@ -243,6 +415,7 @@ class _RegistrationFormState extends State<RegistrationForm> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
           CustomTextField(
+            onEditingComplete: () => FocusScope.of(context).nextFocus(),
             controller: _fullNameController,
             labelText: 'Full Name',
             hintText: 'Enter your full name',
@@ -255,14 +428,17 @@ class _RegistrationFormState extends State<RegistrationForm> {
           ),
           const CustomSizedBox(heightFactor: 0.02),
           CustomTextField(
+            onEditingComplete: () => FocusScope.of(context).nextFocus(),
             controller: _phoneNumberController,
             labelText: 'Phone Number',
             hintText: 'Enter your phone number',
             keyboardType: TextInputType.phone,
             validator: validatePhone,
+            maxLength: 10,
           ),
           const CustomSizedBox(heightFactor: 0.02),
           CustomTextField(
+            onEditingComplete: () => FocusScope.of(context).nextFocus(),
             controller: _emailController,
             labelText: 'Email',
             hintText: 'Enter your email',
@@ -271,6 +447,7 @@ class _RegistrationFormState extends State<RegistrationForm> {
           ),
           const CustomSizedBox(heightFactor: 0.02),
           CustomTextField(
+            onEditingComplete: () => FocusScope.of(context).nextFocus(),
             controller: _addressController,
             labelText: 'Address',
             hintText: 'Enter your address',
@@ -283,6 +460,7 @@ class _RegistrationFormState extends State<RegistrationForm> {
           ),
           const CustomSizedBox(heightFactor: 0.02),
           CustomTextField(
+            onEditingComplete: () => FocusScope.of(context).nextFocus(),
             controller: _purposeController,
             labelText: 'Purpose of Visit',
             hintText: 'Enter the purpose of your visit',
@@ -298,6 +476,7 @@ class _RegistrationFormState extends State<RegistrationForm> {
           const CustomSizedBox(heightFactor: 0.009),
           if (_selectedIdType.isNotEmpty)
             CustomTextField(
+              onEditingComplete: () => FocusScope.of(context).unfocus(),
               controller: _idNumberController,
               labelText: '$_selectedIdType Number',
               hintText: 'Enter your $_selectedIdType number',
@@ -369,6 +548,7 @@ class _RegistrationFormState extends State<RegistrationForm> {
                   ? null
                   : () {
                       if (_formKey.currentState!.validate()) {
+                        printTicket();
                         _saveDataToFirestore();
                       }
                     },

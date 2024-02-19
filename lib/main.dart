@@ -1,11 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
-
-import 'firebase_options.dart';
-import 'views/screenhome.dart'; // Import Firebase Core
+import 'package:get/get.dart' show GetMaterialApp;
+import 'firebase_options.dart' show DefaultFirebaseOptions;
+import 'views/screenhome.dart' show ScreenHome;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    statusBarColor: Colors.white, // Set the status bar color to white
+    statusBarIconBrightness:
+        Brightness.light, // Set the status bar icons to dark color
+  ));
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -16,10 +23,9 @@ void main() async {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return GetMaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'UI SMARTECH',
       theme: ThemeData(
